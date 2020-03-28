@@ -17,7 +17,7 @@ def selection_phase(state):
     # Set the first player by the player with king state
     first_player = None
     for player in state.env.players.all():
-        if player.has_state('king'):
+        if 'king' in player.state:
             first_player = player
             break
 
@@ -40,6 +40,7 @@ def building_phase(state):
         # Remove old states
         del player.state['killed']
         del player.state['stolen']
+        del player.state['king']
 
         character_name = player.hand['character'][0].title
         card_to_player[character_name.lower()] = player

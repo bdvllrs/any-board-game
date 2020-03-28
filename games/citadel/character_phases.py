@@ -61,7 +61,7 @@ def magicien_exchange_cards_deck(player, state):
 
 
 def roi_phase(player, state):
-    pass
+    player.state['king'] = True
 
 
 def eveque_phase(player, state):
