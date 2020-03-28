@@ -1,0 +1,26 @@
+# General information about the players
+num_players:
+  min: 2
+  max: 3
+
+# Define card decks
+card_decks:
+  - characters: character_cards.yaml
+  - buildings: building_cards.yaml
+
+# Define game play
+# A turn will loop over players.
+# A turn is finished whenever all players have played
+game:
+  - turns:  # Character selection
+      setup_turn:  # done at the beginning of the turn
+        actions:
+          - shuffle_character_cards
+      actions:  # done for each player in the turn
+        - discard_character_card(1)
+        - pick_random_character_card(1)
+      resolve_turn: # done when all players played
+        actions:
+          - reset_character_cards
+  - turns:  null # Building
+
