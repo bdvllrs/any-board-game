@@ -16,4 +16,5 @@ class GameEnvironment:
 
 
 class GamePhase:
-    pass
+    def __init__(self, callback):
+        self.callback = callback

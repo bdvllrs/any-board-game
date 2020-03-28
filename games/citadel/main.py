@@ -102,9 +102,9 @@ if __name__ == '__main__':
     card_decks = dict(character=CardDeck(from_yaml="character_cards.yaml"),
                       building=CardDeck(from_yaml="building_cards.yaml"))
 
-    phases = dict(selection=GamePhase(),
-                  building=GamePhase(),
-                  end=GamePhase())
+    phases = dict(selection=GamePhase(selection_phase),
+                  building=GamePhase(building_phase),
+                  end=GamePhase(end_phase))
 
     game_env = GameEnvironment(players,
                                card_decks=card_decks)
