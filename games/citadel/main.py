@@ -3,6 +3,8 @@ from game_engine.environment import GameEnvironment, GamePhase
 from game_engine.players import PlayerManager
 from game_engine.state import GameState
 
+from .character_phases import action_phase
+
 
 def selection_phase(state):
     # state is already a copy, we can modify it without remorse :)
@@ -67,8 +69,7 @@ def building_phase(state):
             continue
         state.env.interface.send_message(f"The {player.hand['character'][0].title} is playing! \n"
                                          "It's {player.username}!")
-        new_player_state = player.play()  # Play and creates a new state
-        state.update_from_player_state(new_player_state)  # Update the global state
+        action_phase(player, state)
         num_built_buildings = len(player.state['built_buildings'])
         if num_built_buildings > number_max_buildings:
             number_max_buildings = num_built_buildings
