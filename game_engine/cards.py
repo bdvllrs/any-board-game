@@ -4,5 +4,8 @@ class Card:
 
 
 class CardDeck:
-    def __init__(self, cards):
-        self.cards = cards
+    def __init__(self, from_yaml=None):
+        self.cards = None
+
+    def import_yaml(self, path):
+        pass
