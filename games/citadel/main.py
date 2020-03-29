@@ -6,28 +6,28 @@ from game_engine.state import GameState
 from .character_phases import action_phase
 
 
-def selection_phase(state):
-    # state is already a copy, we can modify it without remorse :)
+def selection_phase(game):
     # Start by setting all cards to available
-    for card in state.env.card_decks['character'].from_states(['discarded', 'selected']).all():
-        card.to_state('available')
+    for card in game.card_decks['character'].only_states(['discarded', 'selected']):
+        card.set_states(['available'])
 
     # Setup of the phase
-    state.env.card_decks['character'].shuffle()
-    state.env.card_decks['character'].from_state('available').pick(1)[0].to_state('discarded')
+    game.card_decks['character'].shuffle()
+    game.card_decks['character'].only_states(['available']).pick(1)[0].set_states(['discarded'])
 
-    # Set the first player by the player with king state
+    # Set the first player to be the player with king state
     first_player = None
-    for player in state.env.players.all():
+    for player in game.players:
         if 'king' in player.state:
             first_player = player
             break
 
-    assert first_player is not None, "There is not king..."
+    assert first_player is not None, "Didn't find player with state 'king'."
 
     # Give turns to the players
-    for player in state.env.players.all(first=first_player):
-        random_card = state.env.card_decks['character'].from_state('available').pick(1)[0]
+    for player in game.players.all(first=first_player):
+        game.
+        random_card = game.card_decks['character'].from_state('available').pick(1)[0]
         player.hand['character'].append(random_card)
         random_card.to_state('selected')
 
@@ -48,8 +48,7 @@ def building_phase(state):
         card_to_player[character_name.lower()] = player
 
     # Then we define the order of playing
-    order = ['assassin', 'voleur', 'magicien', 'roi', 'évèque', 'marchand', 'architecte', 'condottiere']
-    order = [card_to_player[character_name] for character_name in order]
+    order = [card_to_player[character_name] for character_name in state["character_name"]]
 
     number_max_buildings = 0
     thief_player = None
@@ -112,4 +111,6 @@ if __name__ == '__main__':
                                card_decks=card_decks)
 
     game_state = GameState(players, phases)
+    game_state["character_names"] = ['assassin', 'voleur', 'magicien', 'roi', 'évèque',
+                                     'marchand', 'architecte', 'condottiere']
     game_state.set_next_phase('selection')

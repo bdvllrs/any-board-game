@@ -12,6 +12,7 @@ def action_phase(player, state):
                                                              magicien_exchange_cards_player)
         state.env.interface.for_players([player]).add_button("Exchange cards with deck.",
                                                              magicien_exchange_cards_deck)
+        state.env.interface.for_players([player]).change_state("building_play_magicien")
     elif character_name == "roi":
         roi_phase(player, state)
     elif character_name == "évèque":

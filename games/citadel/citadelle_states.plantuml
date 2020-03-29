@@ -1,0 +1,56 @@
+@startuml citadelle_states
+
+[*] --> SelectionPhase
+
+state SelectionPhase {
+    [*] --> PickACard
+
+    PickACard: currentPlayer
+    PickACard --> PickACard
+    PickACard --> EndSelectionPhase
+
+    EndSelectionPhase --> BuildingPhase
+}
+
+state BuildingPhase {
+    [*] --> Playing2
+
+    EndBuildingPhase --> EndGame: if there is a winner
+    EndBuildingPhase --> SelectionPhase
+
+    state Playing {
+        Playing: currentPlayer
+        Playing: "hasBuilt: bool"
+        Playing: "hasCollectedCoins: bool"
+
+        [*] --> DoPower
+        DoPower --> PickCoinsOrCard
+        PickCoinsOrCard --> Building
+        Building --> EndPlaying
+
+        EndPlaying --> Playing
+        EndPlaying --> EndBuildingPhase
+    }
+}
+
+card
+card -> building
+card -> building -> power
+coins -> power -> building
+card -> power
+coins
+coins -> building
+coins -> building -> power
+coins -> power -> building
+power -> card
+power -> card -> building
+power -> coins
+power -> coins -> building
+
+card -> building -> power
+power -> card -> building
+
+state EndGame {
+}
+
+@enduml
