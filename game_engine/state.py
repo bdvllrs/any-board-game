@@ -1,3 +1,10 @@
+from enum import Enum
+
+
+class Triggers(Enum):
+    CLIENT_ACTION = "CLIENT_ACTION"
+
+
 class StateManager:
     def __init__(self):
         self.nodes = dict()
@@ -7,6 +14,7 @@ class StateManager:
 
         self.state = dict()
         self.players = []
+        self.client_messages = []
 
     def __getitem__(self, item):
         return self.state[item]
@@ -36,20 +44,27 @@ class StateManager:
         state = self.nodes[self.current_state]
         yield state
         while self.current_state != self.end_state:
-            new_state = state(self.state)
+            if state.trigger == Triggers.CLIENT_ACTION:
+                # await client message
+                # client_message = None
+                self.client_messages.append(None)
+                pass
+            new_state = state.handle(self.state)
             self.current_state = new_state
             state = self.nodes[self.current_state]
             yield state
 
 
 class StateNode:
-    def __init__(self, name, is_initial=False, is_end=False):
+    def __init__(self, name, is_initial=False, is_end=False, setup=None, trigger=None):
         self.name = name
         self.is_initial = is_initial
         self.is_end = is_end
+        self.setup = setup
         self.next_states = dict()
         self.actions = dict()
         self.conditions = dict()
+        self.trigger = None
         self.next_node = None
 
     def add_edge(self, next_state, condition=None, actions=None):
@@ -59,7 +74,9 @@ class StateNode:
         self.conditions[next_state.name] = condition
         self.actions[next_state.name] = actions
 
-    def __call__(self, env_state):
+    def handle(self, env_state):
+        if self.setup is not None:
+            self.setup(self, env_state)
         next_node = None
         else_node = None
         for next_state in self.next_states.values():
