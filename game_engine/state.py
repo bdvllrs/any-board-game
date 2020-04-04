@@ -48,19 +48,26 @@ class StateNode:
         self.conditions = dict()
         self.next_node = None
 
-    def add_edge(self, next_state, conditions=None, actions=None):
+    def add_edge(self, next_state, condition=None, actions=None):
         self.next_states[next_state.name] = next_state
-        conditions = conditions or (lambda s: True)
+        condition = condition
         actions = actions or []
-        self.conditions[next_state.name] = conditions
+        self.conditions[next_state.name] = condition
         self.actions[next_state.name] = actions
 
     def __call__(self, env_state):
         self.next_node = None
+        else_node = None
         for next_state in self.next_states.values():
-            if self.conditions[next_state.name](env_state):
+            condition = self.conditions[next_state.name]
+            if condition is None:
+                assert else_node is None, "There can be only one else condition."
+                else_node = next_state
+            elif condition(env_state):
                 assert self.next_node is None, f"Several possible paths are available for state {self.name}."
                 self.next_node = next_state
+        if self.next_node is None:
+            self.next_node = else_node
         assert self.next_node.name in self.actions.keys()
         for action in self.actions[self.next_node.name]:
             action(self, env_state)
