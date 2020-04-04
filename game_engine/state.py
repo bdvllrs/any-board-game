@@ -65,10 +65,10 @@ class StateNode:
                 else_node = next_state
             elif condition(env_state):
                 assert self.next_node is None, f"Several possible paths are available for state {self.name}."
-                self.next_node = next_state
+                self.next_node = next_state.name
         if self.next_node is None:
-            self.next_node = else_node
-        assert self.next_node.name in self.actions.keys()
-        for action in self.actions[self.next_node.name]:
+            self.next_node = else_node.name
+        assert self.next_node in self.actions.keys()
+        for action in self.actions[self.next_node]:
             action(self, env_state)
-        return self.next_node.name
+        return self.next_node
