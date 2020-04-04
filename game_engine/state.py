@@ -56,19 +56,19 @@ class StateNode:
         self.actions[next_state.name] = actions
 
     def __call__(self, env_state):
-        self.next_node = None
+        next_node = None
         else_node = None
         for next_state in self.next_states.values():
             condition = self.conditions[next_state.name]
             if condition is None:
                 assert else_node is None, "There can be only one else condition."
                 else_node = next_state
-            elif condition(env_state):
-                assert self.next_node is None, f"Several possible paths are available for state {self.name}."
-                self.next_node = next_state.name
-        if self.next_node is None:
-            self.next_node = else_node.name
-        assert self.next_node in self.actions.keys()
-        for action in self.actions[self.next_node]:
+            elif condition(self, env_state):
+                assert next_node is None, f"Several possible paths are available for state {self.name}."
+                next_node = next_state.name
+        if next_node is None:
+            next_node = else_node.name
+        assert next_node in self.actions.keys()
+        for action in self.actions[next_node]:
             action(self, env_state)
-        return self.next_node
+        return next_node
