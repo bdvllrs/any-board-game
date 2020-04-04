@@ -6,12 +6,16 @@ class StateManager:
         self.current_state = None
 
         self.state = dict()
+        self.players = []
 
     def __getitem__(self, item):
         return self.state[item]
 
     def __setitem__(self, key, value):
         self.state[key] = value
+
+    def __contains__(self, item):
+        return item in self.state
 
     def add_states(self, states):
         for state in states:
