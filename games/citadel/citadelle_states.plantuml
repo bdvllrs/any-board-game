@@ -5,50 +5,65 @@
 state SelectionPhase {
     [*] --> PickACard
 
-    PickACard: currentPlayer
-    PickACard --> PickACard
-    PickACard --> EndSelectionPhase
+    PickACard: currentPlayer: u32
+    PickACard --> PickACard: next player
+    PickACard --> [*]
 
-    EndSelectionPhase --> BuildingPhase
+    SelectionPhase --> BuildingPhase
 }
 
 state BuildingPhase {
-    [*] --> Playing2
+    [*] --> Playing
 
-    EndBuildingPhase --> EndGame: if there is a winner
-    EndBuildingPhase --> SelectionPhase
+    BuildingPhase --> EndGame: if there is a winner
+    BuildingPhase --> SelectionPhase
+
+    Playing --> Playing: next player
+    Playing --> [*]
 
     state Playing {
-        Playing: currentPlayer
-        Playing: "hasBuilt: bool"
-        Playing: "hasCollectedCoins: bool"
+        Playing: currentPlayer: u32
+        Playing: hasBuilt: bool
+        Playing: hasDrawn: bool
+        Playing: hasPickedCoins: bool
+        Playing: usedPowers: [string]
 
-        [*] --> DoPower
-        DoPower --> PickCoinsOrCard
-        PickCoinsOrCard --> Building
-        Building --> EndPlaying
+        ' Possible sequences:
+        ' - card
+        ' - card -> building
+        ' - card -> building -> power
+        ' - card -> power
+        ' - coins
+        ' - coins -> building
+        ' - coins -> building -> power
+        ' - coins -> power -> building
+        ' - power -> card
+        ' - power -> card -> building
+        ' - power -> coins
+        ' - power -> coins -> building
 
-        EndPlaying --> Playing
-        EndPlaying --> EndBuildingPhase
+        [*] --> UsedPower
+        [*] --> PickedCoins
+        [*] --> DrewCard
+
+        UsedPower --> DrewCard: if !hasDrawn
+        UsedPower --> PickedCoins: if !hasPickedCoins
+        UsedPower --> FinishedPlaying
+
+        PickedCoins --> Build: if !hasBuilt
+        PickedCoins --> UsedPower: if power_allowed(usedPowers)
+        PickedCoins --> FinishedPlaying
+
+        DrewCard --> Build: if !hasBuilt
+        DrewCard --> UsedPower: if power_allowed(usedPowers)
+        DrewCard --> FinishedPlaying
+
+        Build --> UsedPower: if power_allowed(usedPowers)
+        Build --> FinishedPlaying
+
+        FinishedPlaying --> [*]
     }
 }
-
-card
-card -> building
-card -> building -> power
-coins -> power -> building
-card -> power
-coins
-coins -> building
-coins -> building -> power
-coins -> power -> building
-power -> card
-power -> card -> building
-power -> coins
-power -> coins -> building
-
-card -> building -> power
-power -> card -> building
 
 state EndGame {
 }
