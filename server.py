@@ -1,8 +1,8 @@
 import uuid
 from typing import Dict
 
-from flask import Flask, request
 import flask_socketio as sio
+from flask import Flask, request
 
 from game_engine.game import GameInstance
 from game_engine.players import Player
@@ -96,3 +96,14 @@ def play():
     return {"message": "",
             "error": False,
             "current_node_state": ""}
+
+
+@socketio.on("emit_chat_message")
+def chat_socket(data):
+    game_id = data['game_id']
+    player_id = data['player_id']
+    message = data['message']
+    player = games[game_id].get_players([player_id])
+    if game_id in games.keys() and len(player):
+        sio.emit("receive_chat_message", dict(username=player[0].username,
+                                              message=message), room=game_id)

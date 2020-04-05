@@ -105,3 +105,22 @@ A `new-player` named socket message will be emitted to all players in the room o
     "current_node_state": "name of the current node in the graph."
 }
 ```
+
+
+## Chat
+To send a chat message, send a named socket "emit_chat_message" with data:
+```json
+{
+  "game_id": "id of the game",
+  "player_id": "id of the player sending the message",
+  "message": "Sent message"
+}
+```
+
+The server will then emit to all players (including the sender) this named socket to the game instance room:
+```json
+{
+  "username": "username of the player sending the message",
+  "message": "message sent"
+}
+```
