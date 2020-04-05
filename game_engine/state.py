@@ -16,6 +16,20 @@ class StateManager:
         self.players = []
         self.client_messages = []
 
+    def get_graph(self):
+        nodes = []
+        edges = []
+        for node_name, node in self.nodes.items():
+            nodes.append(dict(name=node_name,
+                              is_initial=node.is_initial,
+                              is_end=node.is_end,
+                              trigger=node.trigger,
+                              message_backbone=node.message_backbone))
+            for next_node_name, next_node in node.next_states.items():
+                edges.append(dict(node_start=node_name,
+                                  node_end=next_node_name))
+        return dict(nodes=nodes, edges=edges)
+
     def __getitem__(self, item):
         return self.state[item]
 

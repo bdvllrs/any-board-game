@@ -1,89 +1,107 @@
 TODO: Swagger https://swagger.io/
+## Errors
+If something is incorrect, the response will be:
+```json
+{
+    "error": true,
+    "message":  "Some error message"
+}
+```
 
-## create_instance
+## Create game instance
 
-TBD
-
-## join
-
-`POST join`
-  - usename: str
-  - token: str
+`POST /create`
+- `game` in `['bataille']`:  Name of the game to create
 
 ### Success
 ```json
 {
-  "success": true,
-  "message": null,
-  "user_id": "1234"
+    "game_id": "some game id",
+    "error": false
 }
 ```
 
-### Invalid token
+## join
+
+`POST /join`
+  - game_id (str): game id of the game instance
+  - username (str): username of the player
+  - socket_id (str): socket.IO id of the user to add him to the game instance room.
+
+### Success
 ```json
 {
-  "success": false,
-  "message": "Error message"
+  "error": false,
+  "message": "",
+  "player_id": "id of the player. Is used for all interactions with the server.",
+  "players": ["username 1", "username 2"],
+  "state": {
+      "nodes": [
+          {
+            "name":  "node_name",
+            "is_initial": "whether it is the initial state",
+            "is_end": "whether it is the final state",
+            "trigger": "type of trigger of the node. Either `CLIENT_ACTION` if state starts if the client calls the /play API, or null if started automatically.",
+            "message_backbone": "The expected message backbone from the server when this node is triggered"
+          }
+      ],
+      "edges": [         
+          {"node_start":  "node name", "node_end":  "node name"}
+      ]    
+  }
 }
 ```
-
-## players
-Defines the players in the game. 
-
-`GET players`
+### Message backbone 
 ```json
 {
-  "token": ""
-}
-```
-Returns the list of players associated to room with the given token.
-```json
-{
-  "players": [
-    {
-      "username": "",
-      "user_id": ""
+    "message_backbone": {
+      "some_key":  {"IN":  ["available", "values"]}
     }
-  ]
 }
 ```
-
-## Get Game state
-Probably how the game looks is defined in the game settings.
-If there is a deck and it has a "graveyard", it adds it in the interface.
-This interface returns how the interface should look like:
-- Number of interactive stuff,
-- Is there a timer?
-- Some basic design, like card backgrounds, ...
-
-`GET game-state`
+Example of expected message when calling the "/play" entry point:
 ```json
 {
-  "token": ""
+  "some_key": "available"
 }
 ```
 
-This should be updated continuously (so probably at every change, this will be pushed to the players), 
-and should only give information that each user should have.
-
-Returns: TBD
-
-## Updating
-Shows the item to everybody
-`POST interaction`
- ```json
+### new-player socket
+A `new-player` named socket message will be emitted to all players in the room of the game instance with message:
+```json
 {
-  "user_id": "id of the user who interacted",
-  "token": "",
-  "target": "The element the user has interacted with",
-  "interaction": "a dictionary containing the information of the interaction."
+  "username": "new player username"
 }
 ```
-The content of the interaction will vary depending on the target to suit the needs of each element.
-For instance, picking a card from a deck should also give which one was taken, or how many...
-They will correspond to the signature of the associated function on the server.
 
-Returns the new state (as when calling `GET game-state`) and should also push a new state to all players.
+## Start game
+
+`POST /start`
+- game_id (str): id of the game instance
+- player_id (str): id of the player starting the game. Any player who joined the game can start it.
+
+### Success
+```json
+{
+    "error": false,
+    "message": "",
+    "current_node_state": "name of the current node in the graph."
+}
+```
 
 
+## Play game
 
+`POST /play`
+- game_id (str): id of the game instance
+- player_id (str): id of the player starting the game. Any player who joined the game can start it.
+- message (json): potential message to enter new node.
+
+### Success
+```json
+{
+    "error": false,
+    "message": "",
+    "current_node_state": "name of the current node in the graph."
+}
+```

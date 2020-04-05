@@ -23,7 +23,8 @@ def start_game():
         return {"error": True,
                 "message": f"No game named {game_name}."}
     return {"game_id": game_id,
-            "error": False}
+            "error": False,
+            "message": ""}
 
 
 @app.route("/join", methods=['POST'])
@@ -45,10 +46,10 @@ def join_game():
     games[game_id].add_player(player)
     sio.join_room(game_id, socket_id)
     sio.emit("new-player", dict(username=player.username), room=game_id)
-    # TODO: Give information about states
     return {"error": False,
             "message": "",
             "player_id": player_id,
+            "state": games[game_id].get_state(),
             "players": list(map(lambda u: u.username, games[game_id].get_players()))}
 
 
@@ -70,12 +71,17 @@ def start_game():
     player = games[game_id].get_players([player_id])[0]
     sio.emit("start", dict(username=player.username), room=game_id)
     games[game_id].next()
+    # TODO: Add current node state
+    return {"message": "",
+            "error": False,
+            "current_node_state": ""}
 
 
 @app.route("/play", methods=['POST'])
 def play():
     game_id = request.form['game_id']
     player_id = request.form['player_id']
+    message = request.form['message']
     if game_id not in games.keys():
         return {"error": True,
                 "message": f"Game {game_id} does not exist."}
@@ -86,3 +92,7 @@ def play():
         return {"error": True,
                 "message": f"Player {player_id} is not in the game."}
     # TODO: Check that user can play
+    # TODO: advance the graph
+    return {"message": "",
+            "error": False,
+            "current_node_state": ""}

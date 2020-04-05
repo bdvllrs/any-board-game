@@ -6,6 +6,9 @@ class GameInstance:
         self._players = dict()
         self.started = False
 
+    def get_state(self):
+        raise NotImplementedError
+
     def add_player(self, player):
         self._players[player.uid] = player
 

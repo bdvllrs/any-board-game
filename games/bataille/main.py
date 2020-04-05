@@ -99,3 +99,6 @@ class BatailleInstance(GameInstance):
 
         self.state_mng['cards'] = dict(player1=playing_cards[:half_deck], player2=playing_cards[half_deck:])
         self.state_mng['played'] = 0
+
+    def get_state(self):
+        return self.state_mng
