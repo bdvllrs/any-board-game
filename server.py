@@ -10,7 +10,7 @@ from games.bataille.main import BatailleInstance
 
 app = Flask(__name__)
 socketio = sio.SocketIO(app)
-games: Dict[GameInstance] = dict()
+games = dict()
 
 
 @app.route('/create', methods=['POST'])

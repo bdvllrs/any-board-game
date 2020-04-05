@@ -64,7 +64,7 @@ class StateManager:
             state_copy = copy.deepcopy(self)
             while can_continue and to_yield != self.end_state:
                 new_state = get_next_state(copy.deepcopy(self.nodes[to_yield]), state_copy)
-                if new_state.trigger == Triggers.CLIENT_ACTION:
+                if self.nodes[new_state].trigger == Triggers.CLIENT_ACTION:
                     can_continue = False
                 else:
                     to_yield = get_next_state(self.nodes[to_yield], self)
