@@ -5,6 +5,7 @@ class PlayerManager:
 
 
 class Player:
-    def __init__(self, username, type=None):
+    def __init__(self, username, uid, socket_id):
         self.username = username
-        self.type = type
+        self.uid = uid
+        self.socket_id = socket_id

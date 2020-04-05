@@ -56,7 +56,7 @@ class StateManager:
 
 
 class StateNode:
-    def __init__(self, name, is_initial=False, is_end=False, setup=None, trigger=None):
+    def __init__(self, name, is_initial=False, is_end=False, setup=None, trigger=None, message_backbone=None):
         self.name = name
         self.is_initial = is_initial
         self.is_end = is_end
@@ -64,7 +64,8 @@ class StateNode:
         self.next_states = dict()
         self.actions = dict()
         self.conditions = dict()
-        self.trigger = None
+        self.trigger = trigger
+        self.message_backbone = message_backbone
         self.next_node = None
 
     def add_edge(self, next_state, condition=None, actions=None):

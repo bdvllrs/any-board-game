@@ -1,5 +1,6 @@
 import numpy as np
 
+from game_engine.game import GameInstance
 from game_engine.state import StateManager, StateNode, Triggers
 
 
@@ -50,17 +51,24 @@ def handle_resolve(node, env):
     env['player2_card'] = None
 
 
-class BatailleInstance:
-    def __init__(self):
+class BatailleInstance(GameInstance):
+    def __init__(self, game_id):
+        super().__init__(game_id)
+
+        playing_cards = [str(val) + suit for val in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+                         for suit in ["H", "C", "S", "D"]]
+
         self.state_mng = StateManager()
 
         self.start_node = StateNode("start", is_initial=True)
         self.end_node = StateNode("end", is_end=True)
 
         self.player1 = StateNode("player1",
-                                 trigger=Triggers.CLIENT_ACTION)
+                                 trigger=Triggers.CLIENT_ACTION,
+                                 message_backbone=dict(selected_card=dict(IN=playing_cards)))
         self.player2 = StateNode("player2",
-                                 trigger=Triggers.CLIENT_ACTION)
+                                 trigger=Triggers.CLIENT_ACTION,
+                                 message_backbone=dict(selected_card=dict(IN=playing_cards)))
         self.resolve = StateNode("resolve", setup=handle_resolve)
 
         self.start_node.add_edge(self.player1)
