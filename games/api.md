@@ -55,7 +55,7 @@ If something is incorrect, the response will be:
 ```json
 {
     "message_backbone": {
-      "some_key":  {"IN":  ["available", "values"]}
+      "some_key":  {"$IN":  ["available", "values"]}
     }
 }
 ```

@@ -36,7 +36,7 @@ def test_state_manager():
     stage_mng['counter'] = 0
 
     state_order = []
-    for state in stage_mng():
+    for state in stage_mng.execute():
         state_order.append(state.name)
 
     assert state_order == ["start", "mid1", "mid1", "mid1", "mid2", "end"]
@@ -55,7 +55,7 @@ def test_state_else_condition():
     stage_mng['counter'] = 0
 
     state_order = []
-    for state in stage_mng():
+    for state in stage_mng.execute():
         state_order.append(state.name)
 
     assert state_order == ["start", "mid1", "mid1", "mid1", "mid2", "end"]
@@ -75,5 +75,5 @@ def test_state_two_else_condition():
 
     state_order = []
     with pytest.raises(AssertionError):
-        for state in stage_mng():
+        for state in stage_mng.execute():
             state_order.append(state.name)

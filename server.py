@@ -70,11 +70,11 @@ def start_game():
     games[game_id].start()
     player = games[game_id].get_players([player_id])[0]
     sio.emit("start", dict(username=player.username), room=game_id)
-    games[game_id].next()
-    # TODO: Add current node state
-    return {"message": "",
-            "error": False,
-            "current_node_state": ""}
+    current_state = games[game_id].next()
+
+    return {"message": current_state.status,
+            "error": current_state.error,
+            "current_node_state": current_state.name}
 
 
 @app.route("/play", methods=['POST'])
@@ -91,11 +91,11 @@ def play():
     if player_id not in map(lambda u: u.uid, games[game_id].get_players()):
         return {"error": True,
                 "message": f"Player {player_id} is not in the game."}
-    # TODO: Check that user can play
-    # TODO: advance the graph
-    return {"message": "",
-            "error": False,
-            "current_node_state": ""}
+
+    current_state = games[game_id].next(message)
+    return {"message": current_state.status,
+            "error": current_state.error,
+            "current_node_state": current_state.name}
 
 
 @socketio.on("emit_chat_message")
