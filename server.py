@@ -6,7 +6,7 @@ from flask import Flask, request
 
 from game_engine.game import GameInstance
 from game_engine.players import Player
-from games.bataille.main import BatailleInstance
+from games.bataille.main import BatailleGame
 
 app = Flask(__name__)
 socketio = sio.SocketIO(app)
@@ -18,7 +18,7 @@ def start_game():
     game_name = request.form['game']
     game_id = uuid.uuid4().hex
     if game_name == "bataille":
-        games[game_id] = BatailleInstance(game_id)
+        games[game_id] = BatailleGame(game_id)
     else:
         return {"error": True,
                 "message": f"No game named {game_name}."}
@@ -43,7 +43,10 @@ def join_game():
                 "message": f"Username {username} already exists."}
     player_id = uuid.uuid4().hex
     player = Player(username, player_id, socket_id)
-    games[game_id].add_player(player)
+    is_added = games[game_id].add_player(player)
+    if not is_added:
+        return {"error": True,
+                "message": f"You cannot enter the game."}
     sio.join_room(game_id, socket_id)
     sio.emit("new-player", dict(username=player.username), room=game_id)
     return {"error": False,

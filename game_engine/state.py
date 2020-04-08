@@ -1,140 +1,121 @@
-import copy
-from enum import Enum
+from copy import deepcopy as copy
 
 
-class Triggers(Enum):
-    CLIENT_ACTION = "CLIENT_ACTION"
+class ContextIncorrect(Exception):
+    pass
 
-
-class StateManager:
-    def __init__(self):
-        self.nodes = dict()
-        self.initial_state = None
-        self.end_state = None
-        self.current_state = None
-
-        self.state = dict()
-        self.players = []
-        self.client_messages = []
-
-    def get_graph(self):
-        nodes = []
-        edges = []
-        for node_name, node in self.nodes.items():
-            nodes.append(dict(name=node_name,
-                              is_initial=node.is_initial,
-                              is_end=node.is_end,
-                              trigger=node.trigger,
-                              message_backbone=node.message_backbone))
-            for next_node_name, next_node in node.next_states.items():
-                edges.append(dict(node_start=node_name,
-                                  node_end=next_node_name))
-        return dict(nodes=nodes, edges=edges)
-
-    def __getitem__(self, item):
-        return self.state[item]
-
-    def __setitem__(self, key, value):
-        self.state[key] = value
-
-    def __contains__(self, item):
-        return item in self.state
-
-    def add_states(self, states):
-        for state in states:
-            self.add_state(state)
-
-    def add_state(self, state):
-        assert state.name not in self.nodes.keys()
-        self.nodes[state.name] = state
-        if state.is_initial:
-            self.initial_state = state.name
-        if state.is_end:
-            self.end_state = state.name
-
-    def execute(self):
-        assert self.initial_state is not None, "No initial state has been added."
-        assert self.end_state is not None, "No end state has been added."
-        self.current_state = self.initial_state
-        state = self.nodes[self.current_state]
-        yield state
-        while self.current_state != self.end_state:
-            to_yield = get_next_state(state, self)
-            can_continue = True
-            state_copy = copy.deepcopy(self)
-            while can_continue and to_yield != self.end_state:
-                new_state = get_next_state(copy.deepcopy(self.nodes[to_yield]), state_copy)
-                if self.nodes[new_state].trigger == Triggers.CLIENT_ACTION:
-                    can_continue = False
-                else:
-                    to_yield = get_next_state(self.nodes[to_yield], self)
-
-            self.current_state = to_yield
-            state = self.nodes[self.current_state]
-            yield state
-
-
-def get_next_state(node, env_state):
-    node.status = ""
-    node.error = False
-    if node.trigger == Triggers.CLIENT_ACTION:
-        if not correct_client_message(node.message_backbone, env_state.client_messages[-1]):
-            node.error = True
-            node.status = "The message received from the client is not correct."
-            return node.name  # We stay in the same state
-    if node.setup is not None:
-        node.setup(node, copy.deepcopy(env_state))
-    next_node = None
-    else_node = None
-    for next_state in node.next_states.values():
-        condition = node.conditions[next_state.name]
-        if condition is None:
-            assert else_node is None, "There can be only one else condition."
-            else_node = next_state
-        elif condition(node, env_state):
-            assert next_node is None, f"Several possible paths are available for state {node.name}."
-            next_node = next_state.name
-    if next_node is None:
-        next_node = else_node.name
-    return next_node
-
-
-def correct_client_message(message_backbone, client_message):
-    for key, backbone in message_backbone.items():
+def correct_context(context_model, context):
+    if context_model is None:
+        return context is None
+    for key, model in context_model.items():
         if key == "$IN":
-            if key == "$IN" and client_message not in backbone:
+            if key == "$IN" and context not in model:
                 return False
         else:
-            if key not in client_message.keys():
+            if key not in context.keys():
                 return False
-            if not correct_client_message(backbone, client_message[key]):
+            if not correct_context(model, context[key]):
                 return False
     return True
 
 
-class StateNode:
-    def __init__(self, name, is_initial=False, is_end=False, setup=None, trigger=None, message_backbone=None):
+class FiniteStateMachine:
+    def __init__(self, env):
+        self.nodes = [dict()]
+
+        self.env_history = [copy(env)]
+
+        self.current_node_history = []
+        self._final_node = None
+
+    def add_node(self, name,
+                 is_initial=False,
+                 is_final=False,
+                 setup=None,
+                 state=None,
+                 context_model=None):
+        node = Node(name, is_initial, is_final, setup, state, context_model)
+        self.nodes[0][node.name] = node
+        if node.is_initial:
+            self.current_node_history.append(node.name)
+        if node.is_final:
+            self._final_node = node.name
+
+    def step(self, context=None):
+        nodes = copy(self.nodes[-1])
+        env = copy(self.env_history[-1])
+        self.nodes.append(nodes)
+        self.env_history.append(env)
+
+        current_node = self.current_node_history[-1]
+
+        node = nodes[current_node]
+        is_context_correct = correct_context(node.context_skeleton, context)
+        if is_context_correct:
+            try:
+                node.setup(env, context)
+            except ContextIncorrect:
+                is_context_correct = False
+            else:
+                new_node_name = node.handle(env, context)
+                self.current_node_history.append(new_node_name)
+        if not is_context_correct:
+            self.current_node_history.append(current_node)
+            node.response = dict(error=True, message="Context incorrect.")
+        return node.response
+
+    def revert(self):
+        self.nodes.pop()
+        self.env_history.pop()
+        self.current_node_history.pop()
+
+
+class Node:
+    def __init__(self, name,
+                 is_initial=False,
+                 is_final=False,
+                 setup=None,
+                 state=None,
+                 context_model=None):
         self.name = name
         self.is_initial = is_initial
-        self.is_end = is_end
-        self.setup = setup
-        self.next_states = dict()
-        self.actions = dict()
-        self.conditions = dict()
-        self.trigger = trigger
-        self.message_backbone = message_backbone
-        self.next_node = None
-        self.status = ""
-        self.error = False
+        self.is_final = is_final
+        self.setup_fn = setup
+        self.state = state
 
-    def add_edge(self, next_state, condition=None, actions=None):
-        self.next_states[next_state.name] = next_state
-        condition = condition
+        self.context_model = context_model
+
+        self.response = None
+
+        self.edges = dict()
+
+    def setup(self, env, context):
+        self.response = None
+        if self.setup_fn is not None:
+            self.setup_fn(env, context)
+
+    def add_edge(self, next_state_name, condition=None, actions=None):
         actions = actions or []
-        self.conditions[next_state.name] = condition
-        self.actions[next_state.name] = actions
+        self.edges[next_state_name] = dict(condition=condition,
+                                           actions=actions)
 
-    def do_actions(self, next_node, env_state):
-        assert next_node in self.actions.keys()
-        for action in self.actions[next_node]:
-            action(self, env_state)
+    def execute_transition(self, env, context):
+        next_node = None
+        else_node = None
+        for next_state_name, next_state in self.edges.items():
+            condition = next_state['condition']
+            if condition is None:
+                assert else_node is None, "There can be only one else condition."
+                else_node = next_state_name
+            elif condition(copy(self), copy(env), copy(context)):
+                assert next_node is None, f"Several possible paths are available for state {self.name}."
+                next_node = next_state_name
+        if next_node is None:
+            return else_node
+        return next_node
+
+    def handle(self, env, context):
+        new_node = self.execute_transition(env, context)
+        for action in self.edges[new_node]['actions']:
+            action(self, env, copy(context))
+        return new_node
