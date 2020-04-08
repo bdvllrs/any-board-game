@@ -1,0 +1,186 @@
+openapi: 3.0.0
+info:
+  title: AnyBoardGame API
+  description: TBD
+  version: "0.1.0"
+  #termsOfService: 'http://swagger.io/terms/'
+  #contact:
+    #email: example@example.org
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/any-board-game/server-api/1.0.0
+  - url: 'https://petstore.swagger.io/v2'
+tags:
+  - name: game
+    description: Game management
+  - name: round
+    description: Rounds of games
+paths:
+  /game/{gameId}:
+    get:
+      tags:
+        - game
+      summary: Get information about a game
+      operationId: getGameInfo
+      parameters:
+        - name: gameId
+          in: path
+          description: ID of the game
+          required: true
+          schema:
+            type: string
+            format: name-or-id
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '404':
+          description: Game does not exist
+  /round/create/{gameId}:
+    post:
+      tags:
+        - round
+      summary: Create a new instance of a game
+      operationId: createRound
+      parameters:
+        - name: gameId
+          in: path
+          description: ID of the game to start
+          required: true
+          schema:
+            type: string
+        - name: username
+          in: query
+          description: Username of the creator of the round
+          required: true
+          schema:
+            type: string
+        - name: public
+          in: query
+          description: Whether the round is publicly joinable
+          required: false
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Round'
+        '404':
+          description: Game does not exist
+  /round/findByStatus:
+    get:
+      tags:
+        - round
+      summary: Finds rounds by status
+      description: Multiple status values can be provided with comma separated strings
+      operationId: findRoundsByStatus
+      parameters:
+        - name: status
+          in: query
+          description: Status values that need to be considered for filter
+          required: true
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - pending
+                - ongoing
+                - ended
+              default: pending
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Round'
+        '400':
+          description: Invalid status value
+  /round/{roundId}/join:
+    get:
+      tags:
+        - round
+      summary: Join a round
+      operationId: joinRound
+      parameters:
+        - name: roundId
+          in: path
+          description: ID of the round to join
+          required: true
+          schema:
+            type: string
+        - name: username
+          in: query
+          description: Username of the user that wants to join
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully joined, will be upgraded to a WebSocket
+        '404':
+          description: Round does not exist
+components:
+  schemas:
+    Game:
+      type: object
+      properties:
+        id:
+          type: string
+          format: name-or-id
+        name:
+          type: string
+        description:
+          type: string
+        logo:
+          type: string
+          format: url
+    Round:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        gameId:
+          type: string
+          format: name-or-id
+        createdBy:
+          type: string
+          format: username
+        createdOn:
+          type: string
+          format: date-time
+        players:
+          type: array
+          items:
+            type: string
+            format: username
+        minPlayers:
+          type: integer
+          format: int64
+        maxPlayers:
+          type: integer
+          format: int64
+        public:
+          type: boolean
+        status:
+          type: string
+          description: Round status
+          enum:
+            - pending
+            - ongoing
+            - ended

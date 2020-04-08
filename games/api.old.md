@@ -16,7 +16,7 @@ If something is incorrect, the response will be:
 ### Success
 ```json
 {
-    "game_id": "some game id",
+    "game_id": "the id of the new game",
     "error": false
 }
 ```
@@ -38,20 +38,20 @@ If something is incorrect, the response will be:
   "state": {
       "nodes": [
           {
-            "name":  "node_name",
+            "name": "node_name",
             "is_initial": "whether it is the initial state",
             "is_end": "whether it is the final state",
             "trigger": "type of trigger of the node. Either `CLIENT_ACTION` if state starts if the client calls the /play API, or null if started automatically.",
             "message_backbone": "The expected message backbone from the server when this node is triggered"
           }
       ],
-      "edges": [         
+      "edges": [
           {"node_start":  "node name", "node_end":  "node name"}
-      ]    
+      ]
   }
 }
 ```
-### Message backbone 
+### Message backbone
 ```json
 {
     "message_backbone": {
