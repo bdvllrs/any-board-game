@@ -7,6 +7,8 @@ class GameInstance:
         self.players = dict()
         self.started = False
 
+        self.state = dict()
+
         self.state_machine = FiniteStateMachine(self)
 
     def add_player(self, player):

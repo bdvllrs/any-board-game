@@ -1,22 +1,15 @@
 from copy import deepcopy as copy
 
 
-class ContextIncorrect(Exception):
+class NodeExecutionFailure(Exception):
+    """
+    Is executed whenever the node functions failed (setup, actions, ...)
+    """
     pass
 
-def correct_context(context_model, context):
-    if context_model is None:
-        return context is None
-    for key, model in context_model.items():
-        if key == "$IN":
-            if key == "$IN" and context not in model:
-                return False
-        else:
-            if key not in context.keys():
-                return False
-            if not correct_context(model, context[key]):
-                return False
-    return True
+
+class ContextIncorrect(NodeExecutionFailure):
+    pass
 
 
 class FiniteStateMachine:
@@ -33,8 +26,8 @@ class FiniteStateMachine:
                  is_final=False,
                  setup=None,
                  state=None,
-                 context_model=None):
-        node = Node(name, is_initial, is_final, setup, state, context_model)
+                 context_validators=None):
+        node = Node(name, is_initial, is_final, setup, state, context_validators)
         self.nodes[0][node.name] = node
         if node.is_initial:
             self.current_node_history.append(node.name)
@@ -50,18 +43,21 @@ class FiniteStateMachine:
         current_node = self.current_node_history[-1]
 
         node = nodes[current_node]
-        is_context_correct = correct_context(node.context_skeleton, context)
-        if is_context_correct:
-            try:
-                node.setup(env, context)
-            except ContextIncorrect:
-                is_context_correct = False
-            else:
-                new_node_name = node.handle(env, context)
-                self.current_node_history.append(new_node_name)
-        if not is_context_correct:
+        node.env = env
+        try:
+            node.context = context
+            node.setup()
+            new_node_name = node.handle()
+        except NodeExecutionFailure as e:
+            print("Node failed to execute: ", str(e))
+            print("Reverting to previous state.")
+
             self.current_node_history.append(current_node)
+            self.revert()
+
             node.response = dict(error=True, message="Context incorrect.")
+        else:
+            self.current_node_history.append(new_node_name)
         return node.response
 
     def revert(self):
@@ -76,30 +72,42 @@ class Node:
                  is_final=False,
                  setup=None,
                  state=None,
-                 context_model=None):
+                 context_validators: list = None):
         self.name = name
         self.is_initial = is_initial
         self.is_final = is_final
         self.setup_fn = setup
         self.state = state
-
-        self.context_model = context_model
+        self.context_validators = context_validators or []
+        self.env = None
+        self._context = None
 
         self.response = None
 
         self.edges = dict()
 
-    def setup(self, env, context):
+    @property
+    def context(self):
+        return self._context
+
+    @context.setter
+    def context(self, context):
+        for validator in self.context_validators:
+            if not validator.validate(copy(self), copy(context), copy(self.env)):
+                raise ContextIncorrect(validator.get_message())
+        self._context = context
+
+    def setup(self):
         self.response = None
         if self.setup_fn is not None:
-            self.setup_fn(env, context)
+            self.setup_fn(self, self.env)
 
     def add_edge(self, next_state_name, condition=None, actions=None):
         actions = actions or []
         self.edges[next_state_name] = dict(condition=condition,
                                            actions=actions)
 
-    def execute_transition(self, env, context):
+    def execute_transition(self):
         next_node = None
         else_node = None
         for next_state_name, next_state in self.edges.items():
@@ -107,15 +115,15 @@ class Node:
             if condition is None:
                 assert else_node is None, "There can be only one else condition."
                 else_node = next_state_name
-            elif condition(copy(self), copy(env), copy(context)):
+            elif condition(copy(self), copy(self.env)):
                 assert next_node is None, f"Several possible paths are available for state {self.name}."
                 next_node = next_state_name
         if next_node is None:
             return else_node
         return next_node
 
-    def handle(self, env, context):
-        new_node = self.execute_transition(env, context)
+    def handle(self):
+        new_node = self.execute_transition()
         for action in self.edges[new_node]['actions']:
-            action(self, env, copy(context))
+            action(self, self.env)
         return new_node
