@@ -14,12 +14,12 @@ attributes, `id` and `data`, is to be represented as:
 
 The message is constructed as followed:
 ```json
-{"origin": "uuid", "content": {...}}
+{"origin": "uuid", "content": {}}
 ```
 
 If the client receives a message from the server, it can response with a response constructed like the received message:
 ```json
-{"origin": "uuid", "content": {...}}
+{"origin": "uuid", "content": {}}
 ```
 where the `origin` must match the content of the received message.
 
