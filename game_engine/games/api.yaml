@@ -132,6 +132,15 @@ paths:
       responses:
         '200':
           description: Successfully joined, will be upgraded to a WebSocket
+        '403':
+          description: Game already started or username already exist
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  message:
+                    type: string
         '404':
           description: Round does not exist
 components:

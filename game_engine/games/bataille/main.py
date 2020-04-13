@@ -1,8 +1,8 @@
 import numpy as np
 
 from game_engine.game import GameInstance
-from games.bataille.card import Card
-from games.bataille.context_validations import PlayContextCondition
+from game_engine.games.bataille.card import Card
+from game_engine.games.bataille.context_validations import PlayContextCondition
 
 
 def card_comp(card1, card2):
@@ -68,16 +68,16 @@ class BatailleGame(GameInstance):
                                     context_validators=[PlayContextCondition],
                                     setup=play_node_setup)
 
-        self.state_machine.nodes['start'].add_edge('new_turn')
+        self.state_machine.node('start').add_edge('new_turn')
 
-        self.state_machine.nodes['new_turn'].add_edge('play')
-        self.state_machine.nodes['new_turn'].add_edge('end',
-                                                      condition=new_turn_end_condition)
+        self.state_machine.node('new_turn').add_edge('play')
+        self.state_machine.node('new_turn').add_edge('end',
+                                                     condition=new_turn_end_condition)
 
-        self.state_machine.nodes['play'].add_edge('play')
-        self.state_machine.nodes['play'].add_edge('new_turn',
-                                                  condition=play_new_turn_condition,
-                                                  actions=[play_new_turn_action])
+        self.state_machine.node('play').add_edge('play')
+        self.state_machine.node('play').add_edge('new_turn',
+                                                 condition=play_new_turn_condition,
+                                                 actions=[play_new_turn_action])
 
     def can_add_player(self, player):
         return len(self.players) < 3  # Max 3 players

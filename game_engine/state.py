@@ -21,6 +21,9 @@ class FiniteStateMachine:
         self.current_node_history = []
         self._final_node = None
 
+    def node(self, name):
+        return self.nodes[-1][name]
+
     def add_node(self, name,
                  is_initial=False,
                  is_final=False,

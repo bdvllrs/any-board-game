@@ -12,6 +12,31 @@ attributes, `id` and `data`, is to be represented as:
 {"type": "Foo", "id": 123, "data": "bar"}
 ```
 
+The message is constructed as followed:
+```json
+{"origin": "uuid", "content": {...}}
+```
+
+If the client receives a message from the server, it can response with a response constructed like the received message:
+```json
+{"origin": "uuid", "content": {...}}
+```
+where the `origin` must match the content of the received message.
+
+If the client sends a message, it must provide an `origin` value as well.
+
+## Some specific `origin` values:
+### `$CHAT`
+ This will broadcast to all players in the game.
+ 
+ Example:
+ ```json
+{
+    "origin": "$CHAT",
+    "content": {"type":  "Chat", "message":  "Hi guys!", "sender":  "player_username"}
+}
+```
+
 ## Type aliases
 
 - `Username -> string`
