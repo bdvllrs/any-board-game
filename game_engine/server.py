@@ -41,35 +41,23 @@ def join_round_socket(ws, round_id):
         ws.send(json.dumps({"status": 403, "message": "RoundId is incorrect."}))
         ws.close()
         return
-    if player_id not in map(lambda u: u.uid, games[round_id].players):
+
+    game = games[round_id]
+
+    if player_id not in map(lambda u: u.uid, game.players):
         ws.send(json.dumps({"status": 403, "message": "Player has not joined the game."}))
         ws.close()
         return
 
-    player = games[round_id].players[player_id]
-    sent_messages = {}
+    player = game.players[player_id]
+    player.socket = ws
 
     while not ws.closed:
-        # Send to client
-        message = player.get_message()
-        if message is not None:
-            message_content = dict(id=uuid.uuid4().hex,
-                                   content=message['content'])
-            ws.send(message_content)
-            sent_messages[message_content['id']] = message
-        # Listen for client response
+        # Listen for client messages
         response = ws.receive()
         response = json.loads(response)
-        if response is not None and 'origin' in response and 'content' in response:
-            if response['origin'] == "$CHAT":
-                for player in games[round_id].players:
-                    if player.uid != player_id:
-                        player.send(response['content'])
-            if response['origin'] in sent_messages:
-                message = sent_messages[response['origin']]
-                if message['callback'] is not None:
-                    message['callback'](response['content'])
-                del sent_messages[response['origin']]
+        if response is not None:
+            player.receive(response)
 
 
 def add_player_to_round(round_id, username):

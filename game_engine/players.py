@@ -2,9 +2,20 @@ class Player:
     def __init__(self, username, uid):
         self.username = username
         self.uid = uid
+        self._socket = None
 
         self._to_client_messages = []
         self._from_client_messages = []
+
+    @property
+    def socket(self):
+        return self._socket
+
+    @socket.setter
+    def socket(self, socket):
+        if self._socket is not None:
+            self._socket.close()
+        self._socket = socket
 
     def send(self, message, callback=None):
         """
