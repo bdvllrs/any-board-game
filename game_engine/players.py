@@ -3,8 +3,8 @@ class Player:
         self.username = username
         self.uid = uid
 
-        self._messages = []
-        self._responses = []
+        self._to_client_messages = []
+        self._from_client_messages = []
 
     def send(self, message, callback=None):
         """
@@ -13,12 +13,13 @@ class Player:
             message: content of the message
             callback: function called when a response is received. The callback will be given as argument the response.
         """
-        self._messages.append(dict(content=message, callback=callback))
+        self._to_client_messages.append(dict(content=message, callback=callback))
 
-    def get_message(self):
-        if len(self._messages):
-            return self._messages.pop(0)
+    def get_message(self, from_="server"):
+        message_list = self._to_client_messages if from_ == "server" else self._from_client_messages
+        if len(message_list):
+            return message_list.pop(0)
         return None
 
     def receive(self, response, callback=None):
-        self._responses.append(dict(content=response, callback=callback))
+        self._from_client_messages.append(dict(content=response, callback=callback))

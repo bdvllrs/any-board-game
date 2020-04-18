@@ -52,11 +52,15 @@ def play_new_turn_action(node, env):
 
 
 class BatailleGame(GameInstance):
-    def __init__(self, game_id):
-        super().__init__(game_id)
+    min_players = 2
+    max_players = 4
+    game_id = "bataille"
+
+    def __init__(self, game_id, created_by, is_public):
+        super().__init__(game_id, created_by, is_public)
 
         self.card_suits = ["H", "C", "S", "D"]
-        self.card_numbers = list(map(str, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]))
+        self.card_numbers = list(map(str, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]))
         self.player_hands = dict()
         self.current_player = None
 
@@ -79,9 +83,6 @@ class BatailleGame(GameInstance):
                                                  condition=play_new_turn_condition,
                                                  actions=[play_new_turn_action])
 
-    def can_add_player(self, player):
-        return len(self.players) < 3  # Max 3 players
-
     def start(self):
         super(BatailleGame, self).start()
 
@@ -94,3 +95,6 @@ class BatailleGame(GameInstance):
         self.state['hands'] = dict()
         for k, player_id in enumerate(self.players.keys()):
             self.state['hands'][player_id] = player_hands[k]
+
+    def step(self):
+        pass
