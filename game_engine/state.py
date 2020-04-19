@@ -8,7 +8,7 @@ class NodeExecutionFailure(Exception):
     pass
 
 
-class ContextIncorrect(NodeExecutionFailure):
+class ResponseIncorrect(NodeExecutionFailure):
     pass
 
 
@@ -99,7 +99,7 @@ class Node:
                  state=None,
                  trigger="NODE_SETUP",
                  trigger_condition=None,
-                 context_validators: list = None,
+                 response_validators: list = None,
                  actions=None):
         self.name = name
         self.is_initial = is_initial
@@ -108,25 +108,13 @@ class Node:
         self.state = state
         self.trigger = trigger
         self.trigger_condition = trigger_condition
-        self.context_validators = context_validators or []
+        self.response_validators = response_validators or []
         self.actions = actions
         self.env = None
-        self._context = None
 
         self.response = None
 
         self.edges = dict()
-
-    @property
-    def context(self):
-        return self._context
-
-    @context.setter
-    def context(self, context):
-        for validator in self.context_validators:
-            if not validator.validate(copy(self), copy(context), copy(self.env)):
-                raise ContextIncorrect(validator.get_message())
-        self._context = context
 
     def setup(self):
         self.response = None
@@ -154,6 +142,11 @@ class Node:
         return next_node
 
     def handle(self, *params, **kwargs):
+        # Validates the parameters
+        for validator in self.response_validators:
+            if not validator.validate(copy(self), copy(self.env), *params, **kwargs):
+                raise ResponseIncorrect(validator.get_message())
+
         # Internal node actions
         if self.actions is not None:
             for action in self.actions:

@@ -2,7 +2,7 @@ import numpy as np
 
 from game_engine.game import GameInstance
 from game_engine.games.bataille.card import Card
-from game_engine.games.bataille.context_validations import PlayContextCondition
+from game_engine.games.bataille.response_validations import PlayResponseCondition
 
 
 def card_comp(card1, card2):
@@ -69,7 +69,7 @@ class BatailleGame(GameInstance):
                                     setup=new_turn_setup)
         self.state_machine.add_node('play',
                                     trigger="CLIENT_ACTED",
-                                    context_validators=[PlayContextCondition],
+                                    response_validators=[PlayResponseCondition],
                                     actions=[play_node_action])
 
         self.state_machine.node('start').add_edge('new_turn')

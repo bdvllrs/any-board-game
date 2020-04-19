@@ -1,4 +1,4 @@
-class ContextValidation:
+class ResponseValidation:
     def __init__(self):
         self._messages = []
         self._has_failed = False
@@ -21,12 +21,12 @@ class ContextValidation:
         self._has_failed = True
         self.add_message(message)
 
-    def validate(self, node, context):
+    def validate(self, node, env, *params, **kwargs):
         """
         Checks that the context is correct.
         Args:
             node: checked node
-            context:
+            env:
 
         Returns (bool): whether the context is correct
         """
