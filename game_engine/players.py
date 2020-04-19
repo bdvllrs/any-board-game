@@ -2,10 +2,8 @@ class Player:
     def __init__(self, username, uid):
         self.username = username
         self.uid = uid
+        self.env = None
         self._socket = None
-
-        self._to_client_messages = []
-        self._from_client_messages = []
 
     @property
     def socket(self):
@@ -17,20 +15,26 @@ class Player:
             self._socket.close()
         self._socket = socket
 
-    def send(self, message, callback=None):
+    def send(self, message, callback=None, err_callback=None, condition=None):
         """
-        Sends a message to the interface of the player.
+        Sends a message to the client
         Args:
-            message: content of the message
-            callback: function called when a response is received. The callback will be given as argument the response.
+            message: message to send
+            callback: a callback function to handle the response
+            err_callback: an error callback to handle the case of failing callback
+            condition: an added condition for the event manager
         """
-        self._to_client_messages.append(dict(content=message, callback=callback))
+        self._socket.send(message)
+        if callback is not None:
+            self.env.event_mananager.register("CLIENT_ACTED", callback, err_callback, condition)
 
-    def get_message(self, from_="server"):
-        message_list = self._to_client_messages if from_ == "server" else self._from_client_messages
-        if len(message_list):
-            return message_list.pop(0)
-        return None
+    def receive(self, response):
+        """
+        Receives a message from the client
+        Args:
+            response:
 
-    def receive(self, response, callback=None):
-        self._from_client_messages.append(dict(content=response, callback=callback))
+        Returns:
+
+        """
+        self.env.event_mananager.trigger("CLIENT_ACTED", self, response)

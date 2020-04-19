@@ -23,9 +23,8 @@ def new_turn_setup(node, env):
     env.state['player_order'] = players
 
 
-def play_node_setup(node, env):
-    player = node.context['player']
-    card = node.context['card']
+def play_node_action(node, env, player, client_response):
+    card = client_response['card']
     env.state['current_player'] = env.state['player_order'].pop()
     env.state['played_cards'][player.uid] = card
     env.state['hands'][player.uid].remove(card)
@@ -69,8 +68,9 @@ class BatailleGame(GameInstance):
         self.state_machine.add_node('new_turn',
                                     setup=new_turn_setup)
         self.state_machine.add_node('play',
+                                    trigger="CLIENT_ACTED",
                                     context_validators=[PlayContextCondition],
-                                    setup=play_node_setup)
+                                    actions=[play_node_action])
 
         self.state_machine.node('start').add_edge('new_turn')
 
@@ -95,6 +95,3 @@ class BatailleGame(GameInstance):
         self.state['hands'] = dict()
         for k, player_id in enumerate(self.players.keys()):
             self.state['hands'][player_id] = player_hands[k]
-
-    def step(self):
-        pass

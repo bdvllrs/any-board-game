@@ -1,9 +1,18 @@
 import datetime
 
+from .events import EventManager
 from .state import FiniteStateMachine
 
 
 class GameInstance:
+    """
+    Event lifecycle of the game:
+        1) GAME_STARTS: self-explanatory
+        2) NODE_SETUP: when a node has finished setting up
+        3) CLIENT_ACTED: the client has done an action. Callback params: player: Player, response: dict.
+        4) NODE_EXECUTION_FAILED: the execution of the node failed
+    """
+
     min_players = 2
     max_players = 100
     game_id = "untitled"
@@ -18,10 +27,13 @@ class GameInstance:
 
         self.state = dict()
 
+        self.event_manager = EventManager()
+
         self.state_machine = FiniteStateMachine(self)
 
     def add_player(self, player):
         if self.can_add_player(player):
+            player.env = self
             self.players[player.uid] = player
             return True
         return False
@@ -32,5 +44,5 @@ class GameInstance:
     def start(self):
         self.started = True
 
-    def step(self):
-        raise NotImplementedError
+        self.event_manager.register("GAME_START", self.state_machine.step_setup)
+        self.event_manager.trigger("GAME_START")
