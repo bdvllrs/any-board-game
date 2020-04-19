@@ -84,8 +84,6 @@ class BatailleGame(GameInstance):
                                                  actions=[play_new_turn_action])
 
     def start(self):
-        super(BatailleGame, self).start()
-
         # Distribute cards to players
         playing_cards = [Card(suit, number) for number in self.card_numbers for suit in self.card_suits]
         np.random.shuffle(playing_cards)
@@ -95,3 +93,7 @@ class BatailleGame(GameInstance):
         self.state['hands'] = dict()
         for k, player_id in enumerate(self.players.keys()):
             self.state['hands'][player_id] = player_hands[k]
+
+        # Should be at the end
+        super(BatailleGame, self).start()
+

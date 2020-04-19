@@ -74,6 +74,7 @@ class FiniteStateMachine:
 
             self.node_execution_failed()
         else:
+            # TODO: handle final state
             env.event_manager.register("NODE_EXITED", self.step_setup)
             env.event_manager.trigger("NODE_EXITED")
 
