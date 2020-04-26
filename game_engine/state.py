@@ -1,5 +1,9 @@
 from copy import deepcopy as copy
 
+from typing import Dict, List
+
+from game_engine.game import GameEnv
+
 
 class NodeExecutionFailure(Exception):
     """
@@ -8,88 +12,64 @@ class NodeExecutionFailure(Exception):
     pass
 
 
-class ResponseIncorrect(NodeExecutionFailure):
+class IncorrectResponse(NodeExecutionFailure):
     pass
 
 
 class FiniteStateMachine:
-    def __init__(self, env):
-        self.nodes = [dict()]
+    def __init__(self, env: GameEnv):
+        self.nodes: Dict[str, Node] = dict()
 
-        self.env_history = [copy(env)]
+        self.env: GameEnv = env
 
-        self.current_node_history = []
+        self.current_node_history: List[str] = []
         self._final_node = None
 
-    def node(self, name):
-        return self.nodes[-1][name]
+    def __aiter__(self):
+        return self
 
-    def add_node(self, *params, **kwargs):
-        node = Node(*params, **kwargs)
-        self.nodes[0][node.name] = node
+    async def __anext__(self):
+        if self.current_node_history[-1] == self._final_node:
+            raise StopAsyncIteration
+
+        new_node = await self.step()
+        return new_node
+
+    def add_node(self, node: 'Node'):
+        """
+        Add a new node in the state machine
+        """
+        node.env = self.env
+        self.nodes[node.name] = node
         if node.is_initial:
             self.current_node_history.append(node.name)
         if node.is_final:
             self._final_node = node.name
 
-    def step_setup(self):
-        nodes = copy(self.nodes[-1])
-        env = copy(self.env_history[-1])
-        self.nodes.append(nodes)
-        self.env_history.append(env)
-
+    async def step(self):
+        self.env.step_state()
         current_node = self.current_node_history[-1]
+        node = self.nodes[current_node]
 
-        node = nodes[current_node]
-        node.env = env
         try:
-            node.setup()
+            await node.setup()
+            new_node = await node.handle()
         except NodeExecutionFailure as e:
             print("Node failed to execute: ", str(e))
             print("Reverting to previous state.")
 
             # Retry
-            # TODO: add error callback on states, and manage error
-            self.node_execution_failed()
+            # TODO: manage error
+            self.revert()
         else:
-            env.event_manager.register(node.trigger,
-                                       self.step_resolve,
-                                       self.node_execution_failed,
-                                       condition=node.trigger_condition)
-            env.event_manager.trigger("NODE_SETUP")
+            self.current_node_history.append(new_node)
 
-    def step_resolve(self, *params, **kwargs):
-        nodes = self.nodes[-1]
-        env = self.env_history[-1]
-        current_node = self.current_node_history[-1]
-
-        node = nodes[current_node]
-        node.env = env
-
-        try:
-            node.handle(*params, **kwargs)
-        except NodeExecutionFailure as e:
-            print("Node failed to execute: ", str(e))
-            print("Reverting to previous state.")
-
-            self.node_execution_failed()
-        else:
-            # TODO: handle final state
-            env.event_manager.register("NODE_EXITED", self.step_setup)
-            env.event_manager.trigger("NODE_EXITED")
-
-    def node_execution_failed(self, *params, **kwargs):
-        env = self.env_history[-1]
-        self.revert()
-        env.event_manager.register("NODE_EXECUTION_FAILED", self.step_setup)
-        env.event_manager.trigger("NODE_EXECUTION_FAILED")
+        return self.current_node_history[-1]
 
     def revert(self):
-        if len(self.nodes) == len(self.env_history) == len(self.current_node_history):
-            self.current_node_history.pop()
-        if len(self.nodes) == len(self.env_history):
-            self.nodes.pop()
-            self.env_history.pop()
+        self.env.revert_state()
+        for node in self.nodes.values():
+            node.revert()
 
 
 class Node:
@@ -97,37 +77,40 @@ class Node:
                  is_initial=False,
                  is_final=False,
                  setup=None,
-                 state=None,
-                 trigger="NODE_SETUP",
-                 trigger_condition=None,
-                 response_validators: list = None,
-                 actions=None):
+                 state=None):
         self.name = name
         self.is_initial = is_initial
         self.is_final = is_final
         self.setup_fn = setup
-        self.state = state
-        self.trigger = trigger
-        self.trigger_condition = trigger_condition
-        self.response_validators = response_validators or []
-        self.actions = actions
         self.env = None
+
+        self.state_history = [state.copy()]
 
         self.response = None
 
         self.edges = dict()
 
-    def setup(self):
+    @property
+    def state(self):
+        return self.state_history[-1]
+
+    async def setup(self):
+        assert self.env is not None, "Environment is not set."
+
         self.response = None
+        self.state_history.append(self.state.copy())
         if self.setup_fn is not None:
-            self.setup_fn(self, self.env)
+            await self.setup_fn(self)
+
+    def revert(self):
+        self.state_history.pop()
 
     def add_edge(self, next_state_name, condition=None, actions=None):
         actions = actions or []
         self.edges[next_state_name] = dict(condition=condition,
                                            actions=actions)
 
-    def execute_transition(self, *params, **kwargs):
+    async def execute_transition(self):
         next_node = None
         else_node = None
         for next_state_name, next_state in self.edges.items():
@@ -135,26 +118,20 @@ class Node:
             if condition is None:
                 assert else_node is None, "There can be only one else condition."
                 else_node = next_state_name
-            elif condition(copy(self), copy(self.env), *params, **kwargs):
-                assert next_node is None, f"Several possible paths are available for state {self.name}."
-                next_node = next_state_name
+            else:
+                condition_result = await condition(copy(self))
+                if condition_result:
+                    assert next_node is None, f"Several possible paths are available for state {self.name}."
+                    next_node = next_state_name
         if next_node is None:
             return else_node
         return next_node
 
-    def handle(self, *params, **kwargs):
+    async def handle(self):
         # Validates the parameters
-        for validator in self.response_validators:
-            if not validator.validate(copy(self), copy(self.env), *params, **kwargs):
-                raise ResponseIncorrect(validator.get_message())
-
-        # Internal node actions
-        if self.actions is not None:
-            for action in self.actions:
-                action(self, self.env, *params, **kwargs)
 
         # Transition
-        new_node = self.execute_transition(*params, **kwargs)
+        new_node = await self.execute_transition()
         for action in self.edges[new_node]['actions']:
-            action(self, self.env, *params, **kwargs)
+            await action(self)
         return new_node

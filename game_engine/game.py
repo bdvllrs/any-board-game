@@ -4,15 +4,7 @@ from .events import EventManager
 from .state import FiniteStateMachine
 
 
-class GameInstance:
-    """
-    Event lifecycle of the game:
-        1) GAME_STARTS: self-explanatory
-        2) NODE_SETUP: when a node has finished setting up
-        3) CLIENT_ACTED: the client has done an action. Callback params: player: Player, response: dict.
-        4) NODE_EXECUTION_FAILED: the execution of the node failed
-    """
-
+class GameEnv:
     min_players = 2
     max_players = 100
     game_id = "untitled"
@@ -25,11 +17,19 @@ class GameInstance:
         self.created_by = created_by
         self.is_public = is_public
 
-        self.state = dict()
-
-        self.event_manager = EventManager()
+        self.state_history = [dict()]
 
         self.state_machine = FiniteStateMachine(self)
+
+    @property
+    def state(self):
+        return self.state_history[-1]
+
+    def step_state(self):
+        self.state_history.append(self.state.copy())
+
+    def revert_state(self):
+        self.state_history.pop()
 
     def add_player(self, player):
         if self.can_add_player(player):
@@ -41,8 +41,9 @@ class GameInstance:
     def can_add_player(self, player):
         return len(self.players) < self.max_players
 
-    def start(self):
+    async def start(self):
         self.started = True
 
-        self.event_manager.register("GAME_START", self.state_machine.step_setup)
-        self.event_manager.trigger("GAME_START")
+        async for node in self.state_machine:
+            pass
+

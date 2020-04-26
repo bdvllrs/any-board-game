@@ -1,9 +1,16 @@
+from game_engine.events import Event
+from game_engine.state import IncorrectResponse
+
+
 class Player:
     def __init__(self, username, uid):
         self.username = username
         self.uid = uid
         self.env = None
         self._socket = None
+
+        self._responses = []
+        self._response_event = Event()
 
     @property
     def socket(self):
@@ -15,20 +22,15 @@ class Player:
             self._socket.close()
         self._socket = socket
 
-    def send(self, message, callback=None, err_callback=None, condition=None):
+    async def send(self, message):
         """
         Sends a message to the client
         Args:
             message: message to send
-            callback: a callback function to handle the response
-            err_callback: an error callback to handle the case of failing callback
-            condition: an added condition for the event manager
         """
-        self._socket.send(message)
-        if callback is not None:
-            self.env.event_mananager.register("CLIENT_ACTED", callback, err_callback, condition)
+        await self._socket.send_json(message)
 
-    def receive(self, response):
+    def push_response(self, response):
         """
         Receives a message from the client
         Args:
@@ -37,4 +39,15 @@ class Player:
         Returns:
 
         """
-        self.env.event_mananager.trigger("CLIENT_ACTED", self, response)
+        self._responses.append(response)
+        self._response_event.trigger()
+
+    async def response(self, validators=None):
+        await self._response_event.wait()
+        for validator in validators:
+            if not validator.validate():
+                # TODO: send message to player
+                raise IncorrectResponse(validator.get_message())
+        return self._responses.pop()
+
+

@@ -1,3 +1,4 @@
+import asyncio
 import traceback
 import uuid
 
@@ -17,6 +18,10 @@ def generate_username():
 
 @routes.get("/round/{round_id}/join")
 async def join_game_route(request):
+    """
+    Route between the HTTP GET and the websocket.
+    """
+    # FIXME: better solution
     if 'username' in request.query:
         return await join_game(request)
     else:
@@ -30,6 +35,8 @@ async def join_round_socket(request):
     round_id = request.match_info['round_id']
 
     query = request.query
+
+    # Check that the query and given information is correct
     if 'playerId' not in query:
         await ws.send_json({"status": 403, "message": "PlayerId is required."})
         await ws.close()
@@ -52,9 +59,10 @@ async def join_round_socket(request):
     player = game.players[player_id]
     player.socket = ws
 
+    # Listen for messages
     async for msg in ws:
         if msg.type == aiohttp.WSMsgType.TEXT:
-            if msg.data == 'close':
+            if msg.data == 'CLOSE':
                 await ws.close()
             else:
                 json_msg = msg.json()
@@ -62,8 +70,13 @@ async def join_round_socket(request):
                     if json_msg['type'] == 'PING':
                         await ws.send_json({"type": "PONG"})
                         await ws.send_json({"type": "CLOSE"})
+                    # Start the game
+                    elif json_msg['type'] == "START_GAME" and game.created_by == player.username and not game.started:
+                        asyncio.create_task(game.start())
+                        await asyncio.gather(*[player.socket.send_json({"type": "GAME_STARTED"})
+                                               for player in game.players])
                     else:
-                        player.receive(json_msg)
+                        player.push_response(json_msg)
                 # await ws.send_str(msg.data + '/answer')
         elif msg.type == aiohttp.WSMsgType.ERROR:
             print('ws connection closed with exception %s' %
@@ -129,14 +142,12 @@ async def start_game(request):
             return web.json_response({"message": "An unexpected error has occurred."}, status=500)
     else:
         return web.json_response({"message": "Game does not exists."}, status=404)
-    request.app['game_creators'][round_id] = creator_username
     return add_player_to_round(request, round_id, creator_username)
 
 
 app = web.Application()
 
 app['games'] = dict()
-app['game_creators'] = dict()
 
 app.add_routes(routes)
 
