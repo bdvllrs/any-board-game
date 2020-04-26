@@ -2,9 +2,10 @@ from setuptools import find_packages, setup
 
 setup(name='game-engine',
       version='0.1.0',
-      install_requires=['PyYAML', 'flask==1.1.0', 'gevent', 'flask-sockets', 'numpy'],
+      install_requires=['PyYAML', 'aiohttp', 'numpy'],
       extras_require={
           'dev': [
-              'pytest'
+              'pytest',
+              'pytest-aiohttp'
           ]},
       packages=find_packages())

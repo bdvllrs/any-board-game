@@ -63,6 +63,7 @@ class BatailleGame(GameInstance):
         self.player_hands = dict()
         self.current_player = None
 
+        # Define nodes of the state machine
         self.state_machine.add_node('start', is_initial=True)
         self.state_machine.add_node('end', is_final=True)
         self.state_machine.add_node('new_turn',
@@ -72,6 +73,7 @@ class BatailleGame(GameInstance):
                                     response_validators=[PlayResponseCondition],
                                     actions=[play_node_action])
 
+        # Defines transitions
         self.state_machine.node('start').add_edge('new_turn')
 
         self.state_machine.node('new_turn').add_edge('play')

@@ -1,22 +1,34 @@
-import pytest
+import json
 
-import game_engine.server as server
+import aiohttp
 
-
-@pytest.fixture
-def client():
-    server.app.config['TESTING'] = True
-
-    with server.app.test_client() as client:
-        yield client
+from game_engine.server import app
 
 
-def test_create_and_join_round(client):
+async def test_create_and_join_round(aiohttp_client, loop):
+    client = await aiohttp_client(app)
     game_name = "bataille"
     usernames = ["test1", "test2", "test3"]
-    response = client.post(f"/round/create/{game_name}",
-                           data=dict(username=usernames[0]))
-    response_data = response.get_json()
+    response = await client.post(f"/round/create/{game_name}",
+                                 json=dict(username=usernames[0]))
+    response_data = await response.json()
     assert response_data['createdBy'] == usernames[0]
-    assert response_data['id'] in server.games
-    # TODO: extra checks
+    assert response_data['id'] in client.app['games']
+
+    # player 2 connects
+    response_player2 = await client.get(f"/round/{response_data['id']}/join",
+                                        params=dict(username=usernames[1]))
+
+    response_data_player2 = await response_player2.json()
+    assert response_data_player2['gameId'] == response_data['gameId']
+
+    async with client.ws_connect(f"/round/{response_data['id']}/join?playerId={response_data['playerId']}") as ws:
+        await ws.send_json({"type": "PING"})
+        async for msg in ws:
+            if msg.type == aiohttp.WSMsgType.TEXT:
+                if msg.json()['type'] == 'CLOSE':
+                    break
+                assert msg.json()['type'] == 'PONG'
+            elif msg.type == aiohttp.WSMsgType.ERROR:
+                break
+
