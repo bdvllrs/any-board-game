@@ -2,11 +2,18 @@ from game_engine.players import Player
 from game_engine.games.bataille.main import BatailleGame
 
 
-# def test_bataille_game():
-#     game_instance = BatailleGame("0")
-#     player1 = Player("player 1", "0")
-#     player2 = Player("player 2", "1")
-#     game_instance.add_player(player1)
-#     game_instance.add_player(player2)
-#
-#     game_instance.start()
+async def test_bataille_game_setup():
+    num_players = 2
+    game_instance = BatailleGame("0", "player0", False)
+    players = [Player(f"player{idx}", str(idx)) for idx in range(num_players)]
+    for player in players:
+        game_instance.add_player(player)
+
+    assert len(game_instance.players) == len(players)
+
+    game_instance.started = True
+    await game_instance.setup()
+
+    assert 'hands' in game_instance.state
+    assert len(game_instance.state['hands']) == len(game_instance.players)
+

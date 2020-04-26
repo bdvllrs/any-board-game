@@ -52,8 +52,8 @@ async def play_node_setup(node):
 
 async def new_turn_end_condition(node):
     # We go the end node if someone has played all his cards
-    for player in node.env.players:
-        hand = node.env.state['hands'][player.uid]
+    for player_uid in node.env.players:
+        hand = node.env.state['hands'][player_uid]
         if not len(hand):
             return True
     return False
@@ -127,8 +127,8 @@ class BatailleGame(GameEnv):
                                                   condition=play_new_turn_condition,
                                                   actions=[play_new_turn_action])
 
-    def start(self):
-        # This will be called when the game starts
+    async def setup(self):
+        # This will be called when the game starts before executing the state machine.
         # We will here distribute all cards randomly to the players
         # Distribute cards to players
         playing_cards = [Card(suit, number) for number in self.card_numbers for suit in self.card_suits]
@@ -139,6 +139,3 @@ class BatailleGame(GameEnv):
         self.state['hands'] = dict()
         for k, player_id in enumerate(self.players.keys()):
             self.state['hands'][player_id] = player_hands[k]
-
-        # super call should be at the end
-        super(BatailleGame, self).start()

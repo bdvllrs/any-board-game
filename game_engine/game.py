@@ -38,11 +38,16 @@ class GameEnv:
             return True
         return False
 
+    async def setup(self):
+        pass
+
     def can_add_player(self, player):
         return len(self.players) < self.max_players
 
     async def start(self):
         self.started = True
+
+        await self.setup()
 
         async for node in self.state_machine:
             pass

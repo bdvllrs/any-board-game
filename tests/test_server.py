@@ -1,5 +1,3 @@
-import json
-
 import aiohttp
 
 from game_engine.server import app

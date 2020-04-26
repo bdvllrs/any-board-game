@@ -1,5 +1,3 @@
-from copy import deepcopy as copy
-
 from typing import Dict, List
 
 
@@ -120,7 +118,7 @@ class Node:
                 assert else_node is None, "There can be only one else condition."
                 else_node = next_state_name
             else:
-                condition_result = await condition(copy(self))
+                condition_result = await condition(self)
                 if condition_result:
                     assert next_node is None, f"Several possible paths are available for state {self.name}."
                     next_node = next_state_name
