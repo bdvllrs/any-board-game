@@ -48,6 +48,6 @@ class Player:
             if not validator.validate():
                 # TODO: send message to player
                 raise IncorrectResponse(validator.get_message())
-        return self._responses.pop()
+        return self._responses.pop(0)
 
 
