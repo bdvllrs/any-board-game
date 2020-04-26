@@ -1,4 +1,5 @@
-from game_engine.events import Event
+import asyncio
+
 from game_engine.state import IncorrectResponse
 
 
@@ -9,8 +10,7 @@ class Player:
         self.env = None
         self._socket = None
 
-        self._responses = []
-        self._response_event = Event()
+        self._responses = asyncio.Queue()
 
     @property
     def socket(self):
@@ -30,7 +30,7 @@ class Player:
         """
         await self._socket.send_json(message)
 
-    def push_response(self, response):
+    async def push_response(self, response):
         """
         Receives a message from the client
         Args:
@@ -39,15 +39,14 @@ class Player:
         Returns:
 
         """
-        self._responses.append(response)
-        self._response_event.trigger()
+        await self._responses.put(response)
 
     async def response(self, validators=None):
-        await self._response_event.wait()
+        response = await self._responses.get()
         for validator in validators:
-            if not validator.validate():
+            if not validator.validate(response):
                 # TODO: send message to player
                 raise IncorrectResponse(validator.get_message())
-        return self._responses.pop(0)
+        return response
 
 

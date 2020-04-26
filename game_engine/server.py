@@ -76,7 +76,7 @@ async def join_round_socket(request):
                         await asyncio.gather(*[player.socket.send_json({"type": "GAME_STARTED"})
                                                for player in game.players])
                     else:
-                        player.push_response(json_msg)
+                        await player.push_response(json_msg)
                 # await ws.send_str(msg.data + '/answer')
         elif msg.type == aiohttp.WSMsgType.ERROR:
             print('ws connection closed with exception %s' %
