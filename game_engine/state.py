@@ -2,8 +2,6 @@ from copy import deepcopy as copy
 
 from typing import Dict, List
 
-from game_engine.game import GameEnv
-
 
 class NodeExecutionFailure(Exception):
     """
@@ -17,10 +15,10 @@ class IncorrectResponse(NodeExecutionFailure):
 
 
 class FiniteStateMachine:
-    def __init__(self, env: GameEnv):
+    def __init__(self, env):
         self.nodes: Dict[str, Node] = dict()
 
-        self.env: GameEnv = env
+        self.env = env
 
         self.current_node_history: List[str] = []
         self._final_node = None
@@ -84,7 +82,8 @@ class Node:
         self.setup_fn = setup
         self.env = None
 
-        self.state_history = [state.copy()]
+        self._original_state = state or dict()
+        self.state_history = [self._original_state.copy()]
 
         self.response = None
 
@@ -104,6 +103,8 @@ class Node:
 
     def revert(self):
         self.state_history.pop()
+        if not len(self.state_history):
+            self.state_history = [self._original_state.copy()]
 
     def add_edge(self, next_state_name, condition=None, actions=None):
         actions = actions or []

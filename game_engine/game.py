@@ -1,6 +1,4 @@
 import datetime
-
-from .events import EventManager
 from .state import FiniteStateMachine
 
 
@@ -30,6 +28,8 @@ class GameEnv:
 
     def revert_state(self):
         self.state_history.pop()
+        if not len(self.state_history):
+            self.state_history = [dict()]
 
     def add_player(self, player):
         if self.can_add_player(player):

@@ -139,7 +139,7 @@ async def start_game(request):
         except Exception as e:
             traceback.print_tb(e.__traceback__)
             print(e)
-            return web.json_response({"message": "An unexpected error has occurred."}, status=500)
+            return web.json_response({"message": f"An unexpected error has occurred. \n {e}"}, status=500)
     else:
         return web.json_response({"message": "Game does not exists."}, status=404)
     return add_player_to_round(request, round_id, creator_username)

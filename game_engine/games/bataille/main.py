@@ -95,12 +95,6 @@ class BatailleGame(GameEnv):
         self.card_suits = ["H", "C", "S", "D"]
         self.card_numbers = list(map(str, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]))
 
-        # Now let's define the state
-        # This will contain the hand of each player.
-        self.state['player_hands'] = dict()
-        # And this will keep track of which player is currently playing.
-        self.state['current_player'] = None
-
         # Now we will build the game as state machine automaton.
         # self.state_machine contains the automaton.
         # We can add nodes to the automaton
