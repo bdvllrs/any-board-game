@@ -1,7 +1,7 @@
 from game_engine.components.cards import CardDeck
 from game_engine.game import GameEnv
 from game_engine.games.bataille.card import Card
-from game_engine.games.bataille.interfaces import DefaultInterface
+from game_engine.games.bataille.interfaces import DefaultInterface, PlayerInterface
 from game_engine.games.bataille.utils import new_turn_setup, play_node_setup, new_turn_end_condition, \
     play_new_turn_condition, set_player_in_node_state_action, play_new_turn_action
 from game_engine.state import Node
@@ -35,9 +35,15 @@ class BatailleGame(GameEnv):
 
         self.state['played_cards'] = CardDeck()
 
-        # Define interfaces for the clients.
+        # We then define the interfaces for the client
         default_interface = DefaultInterface("default", self.state['played_cards'])
         self.add_interface(default_interface, is_default=True)
+        # Here we define an empty generic card deck for the hand. We will use the "bind_component" method later
+        # to bind this component with a real card deck.
+        player_interface = PlayerInterface(f"player",
+                                           played_cards_deck=self.state['played_cards'],
+                                           hand_card_deck=CardDeck())
+        self.add_interface(player_interface)
 
         # Now we will build the game as state machine automaton.
         # self.state_machine contains the automaton.
@@ -82,3 +88,4 @@ class BatailleGame(GameEnv):
         self.state['hands'] = dict()
         for k, player_id in enumerate(self.players.keys()):
             self.state['hands'][player_id] = CardDeck(player_hands[k])
+

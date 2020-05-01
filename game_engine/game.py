@@ -21,12 +21,12 @@ class GameEnv:
         self.state_machine = FiniteStateMachine(self)
 
         self.interfaces = dict()
-        self.current_interface = None
+        self.default_interface = None
 
     def add_interface(self, interface, is_default=False):
         self.interfaces[interface.name] = interface
         if is_default:
-            self.current_interface = interface.name
+            self.default_interface = interface.name
 
     @property
     def state(self):
@@ -42,7 +42,7 @@ class GameEnv:
 
     def add_player(self, player):
         if self.can_add_player(player):
-            player.env = self
+            player.set_env(self)
             self.players[player.uid] = player
             return True
         return False
@@ -55,6 +55,9 @@ class GameEnv:
 
     async def start(self):
         self.started = True
+
+        for player in self.players.values():
+            await player.init_player()
 
         await self.setup()
 

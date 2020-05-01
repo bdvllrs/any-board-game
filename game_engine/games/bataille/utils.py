@@ -23,7 +23,11 @@ async def play_node_setup(node):
     # We will now await a response from that player
     # Note that we added a validator. This will then wait for a specific response from the client.
     # This validator checks that the given card is owned by the player
-    response = await player.response(validators=[PlayResponseValidator(node)])
+    client_interface = node.env.interfaces['player']
+    client_interface.bind_component('hand', node.env.state['hands'][player_uid])
+    response = await player.response(validators=[PlayResponseValidator(node)],
+                                     interface=client_interface)
+    client_interface.unbind_component('hand')
     card = response['card']  # This is a Card object thanks to the validator
 
     # Now we update the order of play and current player
