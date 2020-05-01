@@ -44,7 +44,8 @@ class Player:
     async def response(self, validators=None):
         response = await self._responses.get()
         for validator in validators:
-            if not validator.validate(response):
+            response = validator.validate(response)
+            if validator.failed:
                 # TODO: send message to player
                 raise IncorrectResponse(validator.get_message())
         return response
