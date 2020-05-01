@@ -1,4 +1,5 @@
 import datetime
+
 from .state import FiniteStateMachine
 
 
@@ -18,6 +19,14 @@ class GameEnv:
         self.state_history = [dict()]
 
         self.state_machine = FiniteStateMachine(self)
+
+        self.interfaces = dict()
+        self.current_interface = None
+
+    def add_interface(self, interface, is_default=False):
+        self.interfaces[interface.name] = interface
+        if is_default:
+            self.current_interface = interface.name
 
     @property
     def state(self):
@@ -51,4 +60,3 @@ class GameEnv:
 
         async for node in self.state_machine:
             pass
-

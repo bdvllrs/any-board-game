@@ -130,7 +130,8 @@ class Node:
         # Validates the parameters
 
         # Transition
-        new_node = await self.execute_transition()
-        for action in self.edges[new_node]['actions']:
-            await action(self)
-        return new_node
+        next_node_name = await self.execute_transition()
+        next_node = self.env.state_machine.nodes[next_node_name]
+        for action in self.edges[next_node_name]['actions']:
+            await action(self, next_node)
+        return next_node_name
