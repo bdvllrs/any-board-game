@@ -24,9 +24,8 @@ async def test_create_and_join_round(aiohttp_client, loop):
         await ws.send_json({"type": "PING"})
         async for msg in ws:
             if msg.type == aiohttp.WSMsgType.TEXT:
-                if msg.json()['type'] == 'CLOSE':
-                    break
                 assert msg.json()['type'] == 'PONG'
+                break
             elif msg.type == aiohttp.WSMsgType.ERROR:
                 break
 

@@ -24,10 +24,9 @@ class Player:
     def socket(self):
         return self._socket
 
-    @socket.setter
-    def socket(self, socket):
+    async def set_socket(self, socket):
         if self._socket is not None:
-            self._socket.close()
+            await self._socket.close()
         self._socket = socket
 
     async def switch_interface(self, interface):

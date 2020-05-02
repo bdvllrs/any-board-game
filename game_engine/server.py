@@ -23,14 +23,18 @@ async def join_game_route(request):
     """
     # FIXME: better solution
     if 'username' in request.query:
+        print(f'Received join request with username: creating user. {request.query}')
         return await join_game(request)
     else:
+        print(f"Received socket request with {request.query}")
         return await join_round_socket(request)
 
 
 async def join_round_socket(request):
     ws = web.WebSocketResponse()
+    print(f'Created the websocket object: {ws}')
     await ws.prepare(request)
+    print(f'Prepared the websocket connection: {ws}')
 
     round_id = request.match_info['round_id']
 
@@ -57,7 +61,12 @@ async def join_round_socket(request):
         return ws
 
     player = game.players[player_id]
-    player.socket = ws
+    await player.set_socket(ws)
+
+    await asyncio.gather(*[p.socket.send_json({"type": "PLAYER_CONNECTED",
+                                               "username": player.username,
+                                               "message": f"Say hello to {player.username}."})
+                         for p in game.players.values() if p.socket is not None])
 
     # Listen for messages
     async for msg in ws:
@@ -66,15 +75,14 @@ async def join_round_socket(request):
                 await ws.close()
             else:
                 json_msg = msg.json()
-                if "type" in json_msg:
+                if type(json_msg) == dict and "type" in json_msg:
                     if json_msg['type'] == 'PING':
                         await ws.send_json({"type": "PONG"})
-                        await ws.send_json({"type": "CLOSE"})
                     # Start the game
                     elif json_msg['type'] == "START_GAME" and game.created_by == player.username and not game.started:
+                        await asyncio.gather(*[p.socket.send_json({"type": "GAME_STARTED"})
+                                               for p in game.players.values() if p.socket is not None])
                         asyncio.create_task(game.start())
-                        await asyncio.gather(*[player.socket.send_json({"type": "GAME_STARTED"})
-                                               for player in game.players])
                     else:
                         await player.push_response(json_msg)
                 # await ws.send_str(msg.data + '/answer')
@@ -142,7 +150,10 @@ async def start_game(request):
             return web.json_response({"message": f"An unexpected error has occurred. \n {e}"}, status=500)
     else:
         return web.json_response({"message": "Game does not exists."}, status=404)
-    return add_player_to_round(request, round_id, creator_username)
+
+    response = add_player_to_round(request, round_id, creator_username)
+    print(f'Creating game: {response}')
+    return response
 
 
 app = web.Application()

@@ -1,3 +1,4 @@
+from game_engine.client.components import CardDeckInterfaceComponent
 from game_engine.games.bataille.response_validations import PlayResponseValidator
 
 
@@ -24,7 +25,7 @@ async def play_node_setup(node):
     # Note that we added a validator. This will then wait for a specific response from the client.
     # This validator checks that the given card is owned by the player
     client_interface = node.env.interfaces['player']
-    client_interface.bind_component('hand', node.env.state['hands'][player_uid])
+    client_interface.bind_component('hand', CardDeckInterfaceComponent("hand", node.env.state['hands'][player_uid]))
     response = await player.response(validators=[PlayResponseValidator(node)],
                                      interface=client_interface)
     client_interface.unbind_component('hand')
