@@ -5,6 +5,7 @@
         "ms-vsliveshare.vsliveshare",
         "nathanridley.autotrim",
         "streetsidesoftware.code-spell-checker",
-        "tyriar.sort-lines"
+        "tyriar.sort-lines",
+        "timonwong.shellcheck"
     ]
 }

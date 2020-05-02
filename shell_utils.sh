@@ -1,47 +1,47 @@
 #!/usr/bin/env sh
 
 create() {
-    GAME_NAME=$1
-    USERNAME=$2
+    readonly GAME_NAME=$1
+    readonly USER_NAME=$2
 
-    RESPONSE=$(curl --header "Content-Type: application/json" \
+    readonly RESPONSE=$(curl --header "Content-Type: application/json" \
         --request POST \
-        --data "{\"username\":\"${USERNAME}\"}" \
+        --data "{\"username\":\"${USER_NAME}\"}" \
         "http://localhost:8080/round/create/${GAME_NAME}")
-    echo "Received:" $(echo $RESPONSE | jq)
+    jq <<< $RESPONSE
 
     export GAME_ID=$(echo $RESPONSE | jq -r '.gameId')
     export PLAYER_ID_CREATOR=$(echo $RESPONSE | jq -r '.playerId')
 }
 
 join() {
-    GAME_ID=$1
-    USERNAME=$2
+    readonly GAME_ID=$1
+    readonly USER_NAME=$2
 
-    RESPONSE=$(curl "http://localhost:8080/round/${GAME_ID}/join?username=${USERNAME}")
-    echo "Received:" $(echo $RESPONSE | jq)
+    readonly RESPONSE=$(curl "http://localhost:8080/round/${GAME_ID}/join?username=${USER_NAME}")
+    jq <<< $RESPONSE
 
     export PLAYER_ID_LAST=$(echo $RESPONSE | jq -r '.playerId')
 }
 
 ws() {
-    GAME_ID=$1
-    PLAYER_ID=$2
+    readonly GAME_ID=$1
+    readonly PLAYER_ID=$2
 
-    rlwrap -H ./.ws_history -- wscat --slash -P -c "ws://localhost:8080/round/${GAME_ID}/join?playerId=${PLAYER_ID}"
+    rlwrap wscat --slash -P -c "ws://localhost:8080/round/${GAME_ID}/join?playerId=${PLAYER_ID}"
 }
 
 create_bataille() {
     create bataille x
-    join $GAME_ID y
+    join "$GAME_ID" y
 }
 
 ws_creator() {
-    ws $GAME_ID $PLAYER_ID_CREATOR
+    ws "$GAME_ID" "$PLAYER_ID_CREATOR"
 }
 
 ws_last() {
-    ws $GAME_ID $PLAYER_ID_LAST
+    ws "$GAME_ID" "$PLAYER_ID_LAST"
 }
 
 debug_bataille() {
