@@ -67,7 +67,7 @@ async def join_round_socket(request):
     await asyncio.gather(*[p.socket.send_json({"type": "PLAYER_CONNECTED",
                                                "username": player.username,
                                                "message": f"Say hello to {player.username}."})
-                         for p in connected_players])
+                           for p in connected_players])
 
     # Listen for messages
     async for msg in ws:
@@ -164,11 +164,13 @@ async def start_game(request):
     return response
 
 
-app = web.Application()
+def make_app():
+    app = web.Application()
+    app['games'] = dict()
+    app.add_routes(routes)
+    return app
 
-app['games'] = dict()
-
-app.add_routes(routes)
 
 if __name__ == '__main__':
+    app = make_app()
     web.run_app(app)

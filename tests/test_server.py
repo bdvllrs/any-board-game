@@ -1,9 +1,10 @@
 import aiohttp
 
-from game_engine.server import app
+from game_engine.server import make_app
 
 
 async def test_create_and_join_round(aiohttp_client, loop):
+    app = make_app()
     client = await aiohttp_client(app)
     game_name = "bataille"
     usernames = ["test1", "test2", "test3"]
@@ -34,4 +35,3 @@ async def test_create_and_join_round(aiohttp_client, loop):
                 break
             elif msg.type == aiohttp.WSMsgType.ERROR:
                 break
-

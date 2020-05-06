@@ -4,7 +4,7 @@ import aiohttp
 
 from game_engine.games.bataille.main import BatailleGame
 from game_engine.players import Player
-from game_engine.server import app
+from game_engine.server import make_app
 
 
 async def test_bataille_game_setup():
@@ -82,6 +82,8 @@ async def bataille_player(client, round_id, player_id, is_master=False):
 
 
 async def test_bataille_game(aiohttp_client, loop):
+    app = make_app()
+
     game_name = "bataille"
     usernames = ["test1", "test2", "test3"]
     username_master = usernames[0]
