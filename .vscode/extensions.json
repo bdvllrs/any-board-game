@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "docsmsft.docs-markdown",
+        "ms-python.python",
+        "ms-vsliveshare.vsliveshare",
+        "nathanridley.autotrim",
+        "streetsidesoftware.code-spell-checker",
+        "tyriar.sort-lines",
+        "timonwong.shellcheck"
+    ]
+}
