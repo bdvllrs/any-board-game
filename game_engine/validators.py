@@ -1,5 +1,5 @@
 import inspect
-from copy import copy
+from copy import deepcopy
 
 
 class ResponseValidation:
@@ -84,10 +84,11 @@ class ResponseValidation:
         Returns:
 
         """
+        out_response = deepcopy(response)
         if "data" not in response:
             self.add_fail_message("Response format incorrect.")
         else:
-            response['data'] = self.transform_response(copy(response['data']))
+            out_response['data'] = self.transform_response(out_response['data'])
         if not self.failed:
-            response['data'] = self.update_response(response['data'])
-        return response
+            out_response['data'] = self.update_response(out_response['data'])
+        return out_response
