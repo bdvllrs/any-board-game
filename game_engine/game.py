@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 from .state import FiniteStateMachine
@@ -8,29 +9,26 @@ class GameEnv:
     max_players = 100
     game_id = "untitled"
 
-    def __init__(self, game_id, created_by, is_public):
-        self.game_id = game_id
+    def __init__(self, round_id, created_by, is_public):
+        self.round_id = round_id
         self.players = dict()
         self.started = False
         self.created_on = datetime.datetime.now()
         self.created_by = created_by
         self.is_public = is_public
 
+        self.winner_players = []
+
         self.state_history = [dict()]
 
         self.state_machine = FiniteStateMachine(self)
 
-        self.interfaces = dict()
-        self.default_interface = None
-
-    def add_interface(self, interface, is_default=False):
-        self.interfaces[interface.name] = interface
-        if is_default:
-            self.default_interface = interface.name
-
     @property
     def state(self):
         return self.state_history[-1]
+
+    def add_winner(self, player):
+        self.winner_players.append(player.username)
 
     def step_state(self):
         self.state_history.append(self.state.copy())
@@ -56,10 +54,16 @@ class GameEnv:
     async def start(self):
         self.started = True
 
+        await self.setup()
+
         for player in self.players.values():
             await player.init_player()
 
-        await self.setup()
-
         async for node in self.state_machine:
             pass
+
+        for player in self.players.values():
+            await asyncio.gather(*[player.send({
+                "type": "GAME_FINISHED",
+                "winners": self.winner_players
+            })])

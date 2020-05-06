@@ -21,6 +21,12 @@ async def test_create_and_join_round(aiohttp_client, loop):
     assert response_data_player2['gameId'] == response_data['gameId']
 
     async with client.ws_connect(f"/round/{response_data['id']}/join?playerId={response_data['playerId']}") as ws:
+        async for msg in ws:
+            if msg.type == aiohttp.WSMsgType.TEXT:
+                assert msg.json()['type'] == 'PLAYER_CONNECTED'
+                break
+            elif msg.type == aiohttp.WSMsgType.ERROR:
+                break
         await ws.send_json({"type": "PING"})
         async for msg in ws:
             if msg.type == aiohttp.WSMsgType.TEXT:

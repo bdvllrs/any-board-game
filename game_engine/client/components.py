@@ -1,23 +1,27 @@
 class InterfaceComponent:
-    def __init__(self, name, on_action=None, visible=True, position='bottom'):
+    def __init__(self, name, component, visible=True, position='bottom'):
         self.name = name
+        self.component = component
+        self.bound_component = None
 
-        self.state = {
+        self._state = {
+            "type": component.__class__.__name__,
+            "component_name": name,
             "position": position,
             "visible": visible,
-            "on_action": on_action
         }
 
+    @property
+    def state(self):
+        state = self._state
+        component = self.bound_component if self.bound_component is not None else self.component
+        state.update(component.interface_description)
+        state['on_action'] = component.on_action
 
-class CardInterfaceComponent(InterfaceComponent):
-    def __init__(self, name, card, *params, **kwargs):
-        super(CardInterfaceComponent, self).__init__(name, *params, **kwargs)
+        return state
 
-        self.card = card
+    def bind(self, component):
+        self.bound_component = component
 
-
-class CardDeckInterfaceComponent(InterfaceComponent):
-    def __init__(self, name, card_deck, *params, **kwargs):
-        super(CardDeckInterfaceComponent, self).__init__(name, *params, **kwargs)
-
-        self.card_deck = card_deck
+    def unbind(self):
+        self.bound_component = None

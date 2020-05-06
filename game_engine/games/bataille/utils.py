@@ -1,4 +1,3 @@
-from game_engine.client.components import CardDeckInterfaceComponent
 from game_engine.games.bataille.response_validations import PlayResponseValidator
 
 
@@ -13,10 +12,13 @@ async def new_turn_setup(node):
     players = players[1:] + [players[0]]
     # And we add it to the state
     node.env.state['player_order'] = players
-    node.env.state['current_player'] = players[0]
+    node.env.state['played_card_to_player'] = dict()
+    node.env.state['current_player'] = node.env.state['player_order'][0]
 
 
 async def play_node_setup(node):
+    # Now we update the order of play and current player
+    node.env.state['current_player'] = node.env.state['player_order'].pop(0)
     # We will use this setup to block the automaton and wait for a player response.
     # First, the get the player whose turn it is
     player_uid = node.env.state['current_player']
@@ -24,18 +26,15 @@ async def play_node_setup(node):
     # We will now await a response from that player
     # Note that we added a validator. This will then wait for a specific response from the client.
     # This validator checks that the given card is owned by the player
-    client_interface = node.env.interfaces['player']
-    client_interface.bind_component('hand', CardDeckInterfaceComponent("hand", node.env.state['hands'][player_uid]))
     response = await player.response(validators=[PlayResponseValidator(node)],
-                                     interface=client_interface)
-    client_interface.unbind_component('hand')
-    card = response['card']  # This is a Card object thanks to the validator
+                                     act_on=['hand'])
+    card = response  # This is a Card object thanks to the validator
 
-    # Now we update the order of play and current player
-    node.env.state['current_player'] = node.env.state['player_order'].pop()
-    node.env.state['played_cards'] = card.state['player_uid'] = player_uid
+    node.env.state['played_card_to_player'][card.name] = player_uid
+    node.env.state['played_cards'].add([card])
     # And we remove the card from the hand of the player.
     node.env.state['hands'][player.uid].remove(card)
+    # Now we update the played cards in the
 
 
 async def new_turn_end_condition(node):
@@ -64,5 +63,14 @@ async def set_player_in_node_state_action(node, next_node):
 async def play_new_turn_action(node, next_node):
     # If we do a new turn, we need to find who won the turn
     card_order = sorted(node.env.state['played_cards'])
-    loser = card_order[0][0]  # the one with lowest card loses and gets the cards of all other players
+    loser_card = card_order[0]  # the one with lowest card loses and gets the cards of all other players
+    loser = node.env.state['played_card_to_player'][loser_card.name]
     node.env.state['hands'][loser].add(node.env.state['played_cards'].pop(n='all'))
+
+
+async def new_turn_end_action(node, next_node):
+    # Set the winner
+    for player_uid, player in node.env.players.items():
+        hand = node.env.state['hands'][player_uid]
+        if not len(hand):
+            node.env.add_winner(player)

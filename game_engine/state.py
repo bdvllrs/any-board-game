@@ -50,7 +50,7 @@ class FiniteStateMachine:
         try:
             await node.setup()
             new_node = await node.handle()
-        except NodeExecutionFailure as e:
+        except Exception as e:
             print("Node failed to execute: ", str(e))
             print("Reverting to previous state.")
 

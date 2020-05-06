@@ -84,7 +84,10 @@ class ResponseValidation:
         Returns:
 
         """
-        response = self.transform_response(copy(response))
+        if "data" not in response:
+            self.add_fail_message("Response format incorrect.")
+        else:
+            response['data'] = self.transform_response(copy(response['data']))
         if not self.failed:
-            response = self.update_response(response)
+            response['data'] = self.update_response(response['data'])
         return response

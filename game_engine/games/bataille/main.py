@@ -1,4 +1,3 @@
-from game_engine.client.components import CardDeckInterfaceComponent
 from game_engine.components.cards import CardDeck
 from game_engine.game import GameEnv
 from game_engine.games.bataille.card import Card
@@ -14,9 +13,9 @@ class BatailleGame(GameEnv):
     max_players = 4
     game_id = "bataille"  # This is used to start new instances of this game
 
-    def __init__(self, game_id, created_by, is_public):
+    def __init__(self, rouond_id, created_by, is_public):
         # First, always call the super function
-        super().__init__(game_id, created_by, is_public)
+        super().__init__(rouond_id, created_by, is_public)
 
         # Each GameEnv instance has a self.state attribute containing the state of the game.
         # For everything is self.state, a history is kept, so its value can be freely modified.
@@ -27,24 +26,14 @@ class BatailleGame(GameEnv):
 
         # Now we define the cards that will be available.
         # These will stay constant throughout the game.
-        self.card_suits = ["H", "C", "S", "D"]
-        self.card_numbers = list(map(str, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]))
+        self.card_suits = ["H", "C", "S"]
+        self.card_numbers = list(map(str, [1, 2]))
         self.playing_cards = CardDeck([
             Card(suit, number)
             for number in self.card_numbers for suit in self.card_suits
         ])
 
         self.state['played_cards'] = CardDeck()
-
-        # We then define the interfaces for the client
-        default_interface = DefaultInterface("default", CardDeckInterfaceComponent("played", self.state['played_cards']))
-        self.add_interface(default_interface, is_default=True)
-        # Here we define an empty generic card deck for the hand. We will use the "bind_component" method later
-        # to bind this component with a real card deck.
-        player_interface = PlayerInterface(f"player",
-                                           played_cards_deck=CardDeckInterfaceComponent("played", self.state['played_cards']),
-                                           hand_card_deck=CardDeckInterfaceComponent("hand", CardDeck()))
-        self.add_interface(player_interface)
 
         # Now we will build the game as state machine automaton.
         # self.state_machine contains the automaton.
@@ -79,14 +68,23 @@ class BatailleGame(GameEnv):
                                                   actions=[play_new_turn_action])
 
     async def setup(self):
+        # We then define the interfaces for the client
+        # Here we define an empty generic card deck for the hand. We will use the "bind_component" method later
+        # to bind this component with a real card deck.
+        for player in self.players.values():
+            player_interface = PlayerInterface(f"player",
+                                               played_cards_deck=self.state['played_cards'],
+                                               hand_card_deck=CardDeck())
+            player.add_interface(player_interface, is_default=True)
         # This will be called when the game starts before executing the state machine.
         # We will here distribute all cards randomly to the players
         # Distribute cards to players
         self.playing_cards.shuffle()
         player_hands = [[] for _ in self.players.keys()]
         for k in range(len(self.playing_cards)):
-            player_hands[k % len(self.players)].append(self.playing_cards.pop())
+            player_hands[k % len(self.players)].append(self.playing_cards.pop()[0])
         self.state['hands'] = dict()
         for k, player_id in enumerate(self.players.keys()):
-            self.state['hands'][player_id] = CardDeck(player_hands[k])
-
+            hand_deck = CardDeck(player_hands[k])
+            self.state['hands'][player_id] = hand_deck
+            self.players[player_id].interfaces['player'].bind_component('hand', hand_deck)

@@ -1,7 +1,9 @@
 import numpy as np
 
+from game_engine.components import Component
 
-class Card:
+
+class Card(Component):
     def __init__(self, name: str,
                  description: str = "",
                  front_image: str = None,
@@ -14,11 +16,17 @@ class Card:
         self.state = state or dict()
 
 
-class CardDeck:
+class CardDeck(Component):
     def __init__(self, cards=None, from_yaml=None):
         self.cards = cards or []
         if from_yaml is not None:
             self.import_yaml(from_yaml)
+
+    @property
+    def interface_description(self):
+        return {
+            "cards": [card.interface_description for card in self.cards]
+        }
 
     def import_yaml(self, path):
         # TODO: import cards from yaml file
@@ -29,6 +37,9 @@ class CardDeck:
 
     def __getitem__(self, item):
         return self.cards[item]
+
+    def __contains__(self, item):
+        return item in self.cards
 
     def shuffle(self):
         """

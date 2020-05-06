@@ -63,25 +63,30 @@ async def join_round_socket(request):
     player = game.players[player_id]
     await player.set_socket(ws)
 
+    connected_players = filter(lambda p: p.connected, game.players.values())
     await asyncio.gather(*[p.socket.send_json({"type": "PLAYER_CONNECTED",
                                                "username": player.username,
                                                "message": f"Say hello to {player.username}."})
-                         for p in game.players.values() if p.socket is not None])
+                         for p in connected_players])
 
     # Listen for messages
     async for msg in ws:
         if msg.type == aiohttp.WSMsgType.TEXT:
             if msg.data == 'CLOSE':
+                player.disconnect()
+                await asyncio.gather(*[p.socket.send_json({"type": "PLAYER_DISCONNECTED", "username": player.username})
+                                       for p in game.players.values() if p.connected])
                 await ws.close()
             else:
                 json_msg = msg.json()
                 if type(json_msg) == dict and "type" in json_msg:
+                    print("Server received", json_msg)
                     if json_msg['type'] == 'PING':
                         await ws.send_json({"type": "PONG"})
                     # Start the game
                     elif json_msg['type'] == "START_GAME" and game.created_by == player.username and not game.started:
                         await asyncio.gather(*[p.socket.send_json({"type": "GAME_STARTED"})
-                                               for p in game.players.values() if p.socket is not None])
+                                               for p in game.players.values() if p.connected])
                         asyncio.create_task(game.start())
                     else:
                         await player.push_response(json_msg)
@@ -89,6 +94,9 @@ async def join_round_socket(request):
         elif msg.type == aiohttp.WSMsgType.ERROR:
             print('ws connection closed with exception %s' %
                   ws.exception())
+            player.disconnect()
+            await asyncio.gather(*[p.socket.send_json({"type": "PLAYER_DISCONNECTED", "username": player.username})
+                                   for p in game.players.values() if p.connected])
 
     return ws
 
