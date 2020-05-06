@@ -5,6 +5,7 @@ import aiohttp
 from game_engine.games.bataille.main import BatailleGame
 from game_engine.players import Player
 from game_engine.server import make_app
+import numpy as np
 
 
 async def test_bataille_game_setup():
@@ -23,17 +24,33 @@ async def test_bataille_game_setup():
     assert len(game_instance.state['hands']) == len(game_instance.players)
 
 
+def choose_card_to_play(hand, played_cards):
+    # If has one spade, plays it
+    for card in hand:
+        if card['suit'] == 'S':
+            return card
+    # Or look for card that doesn't make you lose
+    for card in hand:
+        for played_card in played_cards:
+            if card['value'] > played_card['value']:
+                return card
+    # Or random card
+    return hand[0]
+
+
 async def bataille_player(client, round_id, player_id, is_master=False):
     async with client.ws_connect(f"/round/{round_id}/join?playerId={player_id}") as ws:
         print(f"{player_id} connected")
         connected_players = []
         player_hand = []
+        played_cards = []
         winners = None
 
         num_steps = 0
 
         async for msg in ws:
-            if num_steps >= 10:
+            num_steps += 1
+            if num_steps >= 100:
                 break
             if msg.type == aiohttp.WSMsgType.TEXT:
                 msg_json = msg.json()
@@ -53,11 +70,13 @@ async def bataille_player(client, round_id, player_id, is_master=False):
                         assert 'played_cards' in msg_json['components']
                         assert 'hand' in msg_json['components']
                         player_hand = msg_json['components']['hand']['cards']
+                        played_cards = msg_json['components']['played_cards']['cards']
                     elif msg_json['type'] == 'ACTION_AWAITED':
                         print("Do action")
                         assert 'on' in msg_json
                         assert msg_json['on'] == ['hand']
-                        picked_card = player_hand[0]
+
+                        picked_card = choose_card_to_play(player_hand, played_cards)
 
                         await ws.send_json({
                             "type": "ACTION_RESPONSE",
@@ -82,6 +101,8 @@ async def bataille_player(client, round_id, player_id, is_master=False):
 
 
 async def test_bataille_game(aiohttp_client, loop):
+    np.random.seed(0)
+
     app = make_app()
 
     game_name = "bataille"
