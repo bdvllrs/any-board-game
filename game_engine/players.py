@@ -1,4 +1,5 @@
 import asyncio
+from copy import deepcopy
 
 
 class Player:
@@ -10,6 +11,8 @@ class Player:
         self.current_interface = None
 
         self._responses = asyncio.Queue()
+
+        self._waiting_messages = []
 
         self.interface_selector_fn = None
 
@@ -39,15 +42,20 @@ class Player:
 
     @property
     def connected(self):
-        return self._socket is not None
+        return self._socket is not None and not self._socket.closed
 
     def disconnect(self):
         self._socket = None
 
-    async def set_socket(self, socket):
+    async def connect(self, socket):
         if self._socket is not None:
             await self._socket.close()
         self._socket = socket
+
+        # Send pending messages
+        waiting_messages = deepcopy(self._waiting_messages)  # insures that no infinite loop if re deconnects.
+        for message in waiting_messages:
+            await self.send(message)
 
     async def switch_interface(self, interface):
         await self.send({
@@ -62,7 +70,10 @@ class Player:
         Args:
             message: message to send
         """
-        await self._socket.send_json(message)
+        if self.connected:
+            await self._socket.send_json(message)
+        else:  # Don't block everyone. Will
+            self._waiting_messages.append(message)
 
     async def push_response(self, response):
         """

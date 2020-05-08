@@ -22,11 +22,33 @@ class CardDeck(Component):
         if from_yaml is not None:
             self.import_yaml(from_yaml)
 
+        self.card_type = None
+        if len(self.cards):
+            self.card_type = self.cards[0].__class__
+            self.check_card_type(self.cards)
+
+    def check_card_type(self, cards):
+        card_type = self.card_type if self.card_type is not None else cards[0].__class__
+        if card_type is not None:
+            for card in cards:
+                if not isinstance(card, card_type):
+                    raise ValueError(f"All cards should have the same type {card_type}")
+
     @property
     def interface_description(self):
-        return {
-            "cards": [card.interface_description for card in self.cards]
-        }
+        return {'cards': [card.interface_description for card in self.cards]}
+
+    @property
+    def on_action(self):
+        # We don't expect the player to select a deck, but a card in the deck.
+        if self.card_type is None:
+            return {}
+
+        card_interface_description = self.cards[0].on_action
+        for name, attr in card_interface_description.items():
+            if '$component' in attr:
+                card_interface_description[name] = attr.replace('$component', '$component.cards[$clicked]')
+        return card_interface_description
 
     def import_yaml(self, path):
         # TODO: import cards from yaml file
@@ -78,6 +100,7 @@ class CardDeck(Component):
         Args:
             cards: list of cards
         """
+        self.check_card_type(cards)
         self.cards.extend(cards)
 
     def remove(self, c):

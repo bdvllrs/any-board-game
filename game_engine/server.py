@@ -61,7 +61,7 @@ async def join_round_socket(request):
         return ws
 
     player = game.players[player_id]
-    await player.set_socket(ws)
+    await player.connect(ws)
 
     connected_players = filter(lambda p: p.connected, game.players.values())
     await asyncio.gather(*[p.socket.send_json({"type": "PLAYER_CONNECTED",

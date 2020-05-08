@@ -1,11 +1,11 @@
 import asyncio
 
 import aiohttp
+import numpy as np
 
 from game_engine.games.bataille.main import BatailleGame
 from game_engine.players import Player
 from game_engine.server import make_app
-import numpy as np
 
 
 async def test_bataille_game_setup():
@@ -69,8 +69,8 @@ async def bataille_player(client, round_id, player_id, is_master=False):
                         assert 'components' in msg_json
                         assert 'played_cards' in msg_json['components']
                         assert 'hand' in msg_json['components']
-                        player_hand = msg_json['components']['hand']['cards']
                         played_cards = msg_json['components']['played_cards']['cards']
+                        player_hand = msg_json['components']['hand']['cards']
                     elif msg_json['type'] == 'ACTION_AWAITED':
                         print("Do action")
                         assert 'on' in msg_json
@@ -93,6 +93,7 @@ async def bataille_player(client, round_id, player_id, is_master=False):
                 else:
                     print(f"=== Player {player_id} received ===")
                     print(msg.json())
+                    break
             elif msg.type == aiohttp.WSMsgType.ERROR:
                 print(f"Error for player {player_id}: {msg.exception()}")
                 break
