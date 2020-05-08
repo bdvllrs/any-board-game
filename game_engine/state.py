@@ -20,6 +20,7 @@ class FiniteStateMachine:
 
         self.current_node_history: List[str] = []
         self._final_node = None
+        self.initial_node = True
 
     def __aiter__(self):
         return self
@@ -27,6 +28,11 @@ class FiniteStateMachine:
     async def __anext__(self):
         if self.current_node_history[-1] == self._final_node:
             raise StopAsyncIteration
+
+        # To have a first loop before the setting up the first node
+        if self.initial_node:
+            self.initial_node = False
+            return self.current_node_history[0]
 
         new_node = await self.step()
         return new_node

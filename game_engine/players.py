@@ -11,6 +11,8 @@ class Player:
 
         self._responses = asyncio.Queue()
 
+        self.interface_selector_fn = None
+
         self.interfaces = dict()
         self.default_interface = None
 
@@ -24,6 +26,11 @@ class Player:
         self.env = env
 
     async def init_player(self):
+        await self.switch_interface(self.interfaces[self.current_interface])
+
+    async def update_interface(self, node):
+        if self.interface_selector_fn is not None:
+            self.current_interface = self.interface_selector_fn(node, self)
         await self.switch_interface(self.interfaces[self.current_interface])
 
     @property
@@ -68,30 +75,23 @@ class Player:
         """
         await self._responses.put(response)
 
-    async def response(self, validators=None, interface=None, act_on=None):
+    async def response(self, validators=None, act_on=None):
         """
         Asks for a response from the client
         Args:
             validators: list of validators to use
-            interface: if provided will switch the client on this interface. The interface is reset to the previous
-              interface after the transaction.
             act_on: if provided, specifies to the client on what component he should act on.
 
         Returns: response
         """
-        if interface is not None:
-            await self.switch_interface(interface)
-        else:
-            await self.switch_interface(self.interfaces[self.current_interface])
-
         if act_on is not None:
             await self.send({
                 'type': 'ACTION_AWAITED',
                 'on': act_on
             })
 
-        is_response_received = False
-        while not is_response_received:
+        is_correct_response = False
+        while not is_correct_response:
             response = await self._responses.get()
             failed = False
             messages = []
@@ -101,10 +101,8 @@ class Player:
                     failed = True
                     messages.append(validator.get_message())
             if not failed:
-                is_response_received = True
+                is_correct_response = True
             else:
                 await self.socket.send_json({"type": "ERROR",
                                              "messages": messages})
-        if interface is not None:
-            await self.switch_interface(self.interfaces[self.current_interface])
         return response['data']

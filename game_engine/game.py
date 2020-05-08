@@ -60,10 +60,10 @@ class GameEnv:
             await player.init_player()
 
         async for node in self.state_machine:
-            pass
+            await asyncio.gather(*[player.update_interface(self.state_machine.nodes[node])
+                                   for player in self.players.values()])
 
-        for player in self.players.values():
-            await asyncio.gather(*[player.send({
-                "type": "GAME_FINISHED",
-                "winners": self.winner_players
-            })])
+        await asyncio.gather(*[player.send({
+            "type": "GAME_FINISHED",
+            "winners": self.winner_players
+        }) for player in self.players.values()])
