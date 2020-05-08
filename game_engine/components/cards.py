@@ -1,6 +1,6 @@
 import numpy as np
 
-from game_engine.components import Component
+from game_engine.components.component import Component
 
 
 class Card(Component):

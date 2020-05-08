@@ -13,9 +13,9 @@ class BatailleGame(GameEnv):
     max_players = 4
     game_id = "bataille"  # This is used to start new instances of this game
 
-    def __init__(self, rouond_id, created_by, is_public):
+    def __init__(self, round_id, created_by, is_public):
         # First, always call the super function
-        super().__init__(rouond_id, created_by, is_public)
+        super().__init__(round_id, created_by, is_public)
 
         # Each GameEnv instance has a self.state attribute containing the state of the game.
         # For everything is self.state, a history is kept, so its value can be freely modified.

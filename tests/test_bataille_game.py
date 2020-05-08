@@ -6,6 +6,7 @@ import numpy as np
 from game_engine.games.bataille.main import BatailleGame
 from game_engine.players import Player
 from game_engine.server import make_app
+from tests.test_server import initialize_server
 
 
 async def test_bataille_game_setup():
@@ -104,32 +105,12 @@ async def bataille_player(client, round_id, player_id, is_master=False):
 async def test_bataille_game(aiohttp_client, loop):
     np.random.seed(0)
 
-    app = make_app()
-
     game_name = "bataille"
     usernames = ["test1", "test2", "test3"]
-    username_master = usernames[0]
-    clients = dict()
-    responses = dict()
-    responses_data = dict()
-    for username in usernames:
-        clients[username] = await aiohttp_client(app)
-
-    responses[username_master] = await clients[username_master].post(f"/round/create/{game_name}",
-                                                                     json=dict(username=username_master))
-    responses_data[username_master] = await responses[username_master].json()
-
-    round_id = responses_data[username_master]['id']
-
-    for username in usernames[1:]:
-        # player 2 connects
-        responses[username] = await clients[username].get(f"/round/{round_id}/join",
-                                                          params=dict(username=username))
-
-        responses_data[username] = await responses[username].json()
+    round_id, clients, response_data = await initialize_server(aiohttp_client, game_name, usernames)
 
     await asyncio.gather(*[bataille_player(clients[username],
                                            round_id,
-                                           responses_data[username]['playerId'],
-                                           username == username_master)
+                                           response_data[username]['playerId'],
+                                           username == usernames[0])
                            for username in usernames])

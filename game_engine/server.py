@@ -85,9 +85,14 @@ async def join_round_socket(request):
                         await ws.send_json({"type": "PONG"})
                     # Start the game
                     elif json_msg['type'] == "START_GAME" and game.created_by == player.username and not game.started:
-                        await asyncio.gather(*[p.socket.send_json({"type": "GAME_STARTED"})
-                                               for p in game.players.values() if p.connected])
+                        await asyncio.gather(*[p.send({"type": "GAME_STARTED"})
+                                               for p in game.players.values()])
                         asyncio.create_task(game.start())
+                    elif json_msg['type'] == "CHAT":
+                        await asyncio.gather(*[p.send({"type": "CHAT",
+                                                       "message": json_msg['message'],
+                                                       "author": player.username})
+                                               for p in game.players.values()])
                     else:
                         await player.push_response(json_msg)
                 # await ws.send_str(msg.data + '/answer')
@@ -95,8 +100,8 @@ async def join_round_socket(request):
             print('ws connection closed with exception %s' %
                   ws.exception())
             player.disconnect()
-            await asyncio.gather(*[p.socket.send_json({"type": "PLAYER_DISCONNECTED", "username": player.username})
-                                   for p in game.players.values() if p.connected])
+            await asyncio.gather(*[p.send({"type": "PLAYER_DISCONNECTED", "username": player.username})
+                                   for p in game.players.values()])
 
     return ws
 
