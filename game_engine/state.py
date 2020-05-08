@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Dict, List
 
 
@@ -89,19 +90,21 @@ class Node:
         self._original_state = state or dict()
         self.state_history = [self._original_state.copy()]
 
-        self.response = None
-
         self.edges = dict()
 
     @property
     def state(self):
         return self.state_history[-1]
 
+    def step_state(self):
+        copied_state = deepcopy(self.state)
+        self.state_history.append(copied_state)
+
     async def setup(self):
         assert self.env is not None, "Environment is not set."
 
-        self.response = None
-        self.state_history.append(self.state.copy())
+        self.step_state()
+
         if self.setup_fn is not None:
             await self.setup_fn(self)
 

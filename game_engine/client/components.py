@@ -1,11 +1,10 @@
 class InterfaceComponent:
-    def __init__(self, name, component, visible=True, position='bottom'):
+    def __init__(self, name, visible=True, position='bottom'):
         self.name = name
-        self.component = component
         self.bound_component = None
 
         self._state = {
-            "type": component.__class__.__name__,
+            "type": None,
             "component_name": name,
             "position": position,
             "visible": visible,
@@ -14,9 +13,10 @@ class InterfaceComponent:
     @property
     def state(self):
         state = self._state
-        component = self.bound_component if self.bound_component is not None else self.component
-        state.update(component.interface_description)
-        state['on_action'] = component.on_action
+        if self.bound_component is not None:
+            state.update(self.bound_component.interface_description)
+            state['on_action'] = self.bound_component.on_action
+            state['type'] = self.bound_component.__class__.__name__
 
         return state
 

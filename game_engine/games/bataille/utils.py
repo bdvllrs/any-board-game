@@ -74,3 +74,4 @@ async def new_turn_end_action(node, next_node):
         hand = node.env.state['hands'][player_uid]
         if not len(hand):
             node.env.add_winner(player)
+

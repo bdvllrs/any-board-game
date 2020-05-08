@@ -2,18 +2,9 @@ from game_engine.client.components import InterfaceComponent
 from game_engine.client.interface import Interface
 
 
-class DefaultInterface(Interface):
-    def __init__(self, name, played_cards_deck):
+class PlayerInterface(Interface):  # This extends the default interface
+    def __init__(self, name):
         super().__init__(name)
 
-        self.components = {
-            # Cards played by the players during the round
-            "played_cards": InterfaceComponent("played_cards", played_cards_deck)
-        }
-
-
-class PlayerInterface(DefaultInterface):  # This extends the default interface
-    def __init__(self, name, played_cards_deck, hand_card_deck):
-        super().__init__(name, played_cards_deck)
-
-        self.add_component(InterfaceComponent("hand", hand_card_deck))
+        self.add_component(InterfaceComponent("played_cards"))
+        self.add_component(InterfaceComponent("hand"))

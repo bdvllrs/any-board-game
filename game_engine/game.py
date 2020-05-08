@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from copy import deepcopy
 
 from .state import FiniteStateMachine
 
@@ -31,7 +32,8 @@ class GameEnv:
         self.winner_players.append(player.username)
 
     def step_state(self):
-        self.state_history.append(self.state.copy())
+        copied_state = deepcopy(self.state)
+        self.state_history.append(copied_state)
 
     def revert_state(self):
         self.state_history.pop()
@@ -51,13 +53,13 @@ class GameEnv:
     def can_add_player(self, player):
         return len(self.players) < self.max_players
 
+    def bind_interface(self, node, player):
+        return player.interfaces[player.current_interface]
+
     async def start(self):
         self.started = True
 
         await self.setup()
-
-        for player in self.players.values():
-            await player.init_player()
 
         async for node in self.state_machine:
             await asyncio.gather(*[player.update_interface(self.state_machine.nodes[node])

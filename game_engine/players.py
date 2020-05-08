@@ -14,8 +14,6 @@ class Player:
 
         self._waiting_messages = []
 
-        self.interface_selector_fn = None
-
         self.interfaces = dict()
         self.default_interface = None
 
@@ -28,13 +26,10 @@ class Player:
     def set_env(self, env):
         self.env = env
 
-    async def init_player(self):
-        await self.switch_interface(self.interfaces[self.current_interface])
-
     async def update_interface(self, node):
-        if self.interface_selector_fn is not None:
-            self.current_interface = self.interface_selector_fn(node, self)
-        await self.switch_interface(self.interfaces[self.current_interface])
+        interface = self.env.bind_interface(node, self)
+        self.current_interface = interface.name
+        await self.switch_interface(interface)
 
     @property
     def socket(self):

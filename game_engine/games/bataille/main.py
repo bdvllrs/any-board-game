@@ -1,7 +1,7 @@
 from game_engine.components.cards import CardDeck
 from game_engine.game import GameEnv
 from game_engine.games.bataille.card import Card
-from game_engine.games.bataille.interfaces import DefaultInterface, PlayerInterface
+from game_engine.games.bataille.interfaces import PlayerInterface
 from game_engine.games.bataille.utils import new_turn_setup, play_node_setup, new_turn_end_condition, \
     play_new_turn_condition, set_player_in_node_state_action, play_new_turn_action
 from game_engine.state import Node
@@ -67,14 +67,25 @@ class BatailleGame(GameEnv):
                                                   condition=play_new_turn_condition,
                                                   actions=[play_new_turn_action])
 
+    def bind_interface(self, node, player):
+        """
+        This is called before updating the interface.
+        Args:
+            node: Current node
+            player: interface
+
+        Returns: the id of the next interface to use
+        """
+        interface = player.interfaces['player'].bind(played_cards=self.state['played_cards'],
+                                                     hand=self.state['hands'][player.uid])
+        return interface
+
     async def setup(self):
         # We then define the interfaces for the client
         # Here we define an empty generic card deck for the hand. We will use the "bind_component" method later
         # to bind this component with a real card deck.
         for player in self.players.values():
-            player_interface = PlayerInterface(f"player",
-                                               played_cards_deck=self.state['played_cards'],
-                                               hand_card_deck=CardDeck())
+            player_interface = PlayerInterface("player")
             player.add_interface(player_interface, is_default=True)
         # This will be called when the game starts before executing the state machine.
         # We will here distribute all cards randomly to the players
@@ -87,4 +98,3 @@ class BatailleGame(GameEnv):
         for k, player_id in enumerate(self.players.keys()):
             hand_deck = CardDeck(player_hands[k])
             self.state['hands'][player_id] = hand_deck
-            self.players[player_id].interfaces['player'].bind_component('hand', hand_deck)

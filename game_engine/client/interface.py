@@ -4,6 +4,11 @@ class Interface:
 
         self.components = dict()
 
+    def bind(self, **kwargs):
+        for component_name, component in kwargs.items():
+            self._bind_component(component_name, component)
+        return self
+
     def add_component(self, component, name=None):
         """
         Add a component
@@ -15,7 +20,7 @@ class Interface:
             name = component.name
         self.components[name] = component
 
-    def bind_component(self, component_name, component):
+    def _bind_component(self, component_name, component):
         """
         Binds a component with a new one
         Args:
@@ -24,16 +29,6 @@ class Interface:
         """
         assert component_name in self.components, f"{component_name} is not a component."
         self.components[component_name].bind(component)
-        return self
-
-    def unbind_component(self, component_name):
-        """
-        Unbind a given component
-        Args:
-            component_name: name of the component to unbind
-        """
-        assert component_name in self.components, f"{component_name} is not a component."
-        self.components[component_name].unbind()
         return self
 
     def get_client_update(self):
