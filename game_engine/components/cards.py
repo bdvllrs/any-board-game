@@ -41,14 +41,15 @@ class CardDeck(Component):
     @property
     def on_action(self):
         # We don't expect the player to select a deck, but a card in the deck.
-        if self.card_type is None:
+        if not len(self.cards):
             return {}
 
         card_interface_description = self.cards[0].on_action
+        interface_description = dict()
         for name, attr in card_interface_description.items():
             if '$component' in attr:
-                card_interface_description[name] = attr.replace('$component', '$component.cards[$clicked]')
-        return card_interface_description
+                interface_description[name] = attr.replace('$component', '$component.cards[$clicked]')
+        return interface_description
 
     def import_yaml(self, path):
         # TODO: import cards from yaml file

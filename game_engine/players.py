@@ -54,6 +54,7 @@ class Player:
 
         # Send pending messages
         waiting_messages = deepcopy(self._waiting_messages)  # insures that no infinite loop if re deconnects.
+        self._waiting_messages = []
         for message in waiting_messages:
             await self.send(message)
 
@@ -72,7 +73,7 @@ class Player:
         """
         if self.connected:
             await self._socket.send_json(message)
-        else:  # Don't block everyone. Will
+        else:  # Don't block everyone
             self._waiting_messages.append(message)
 
     async def push_response(self, response):
