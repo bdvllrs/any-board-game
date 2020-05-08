@@ -2,33 +2,7 @@ import asyncio
 
 import aiohttp
 
-from game_engine.server import make_app
-
-
-async def initialize_server(aiohttp_client, game_name, usernames):
-    app = make_app()
-
-    username_master = usernames[0]
-    clients = dict()
-    responses = dict()
-    responses_data = dict()
-    for username in usernames:
-        clients[username] = await aiohttp_client(app)
-
-    responses[username_master] = await clients[username_master].post(f"/round/create/{game_name}",
-                                                                     json=dict(username=username_master))
-    responses_data[username_master] = await responses[username_master].json()
-
-    round_id = responses_data[username_master]['id']
-
-    for username in usernames[1:]:
-        # player 2 connects
-        responses[username] = await clients[username].get(f"/round/{round_id}/join",
-                                                          params=dict(username=username))
-
-        responses_data[username] = await responses[username].json()
-
-    return round_id, clients, responses_data
+from game_engine.server import make_app, initialize_server
 
 
 async def test_create_and_join_round(aiohttp_client, loop):

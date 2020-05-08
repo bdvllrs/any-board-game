@@ -5,8 +5,7 @@ import numpy as np
 
 from game_engine.games.bataille.main import BatailleGame
 from game_engine.players import Player
-from game_engine.server import make_app
-from tests.test_server import initialize_server
+from game_engine.server import initialize_server
 
 
 async def test_bataille_game_setup():
