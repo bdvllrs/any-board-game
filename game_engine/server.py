@@ -176,11 +176,6 @@ def make_app():
     return app
 
 
-if __name__ == '__main__':
-    app = make_app()
-    web.run_app(app)
-
-
 async def initialize_server(aiohttp_client, game_name, usernames):
     app = make_app()
 
@@ -205,3 +200,15 @@ async def initialize_server(aiohttp_client, game_name, usernames):
         responses_data[username] = await responses[username].json()
 
     return round_id, clients, responses_data
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser(description="AnyBoardGame")
+    parser.add_argument('--port', '-p', type=int, default=8080,
+                        help='Port of the application.')
+    args = parser.parse_args()
+
+    app = make_app()
+    web.run_app(app, port=args.port)
