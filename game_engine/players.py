@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from copy import deepcopy
 
 
@@ -43,6 +44,7 @@ class Player:
         self._socket = None
 
     async def connect(self, socket):
+        logging.info(f"Connecting {self.uid}.")
         if self._socket is not None:
             await self._socket.close()
         self._socket = socket
@@ -50,6 +52,8 @@ class Player:
         # Send pending messages
         waiting_messages = deepcopy(self._waiting_messages)  # insures that no infinite loop if re deconnects.
         self._waiting_messages = []
+        if len(waiting_messages):
+            logging.info(f"{self.uid} catching up missing messages.")
         for message in waiting_messages:
             await self.send(message)
 
@@ -66,6 +70,9 @@ class Player:
         Args:
             message: message to send
         """
+        logging.debug(f"{self.uid} sends message.")
+        logging.debug(message)
+
         if self.connected:
             await self._socket.send_json(message)
         else:  # Don't block everyone
@@ -91,6 +98,7 @@ class Player:
 
         Returns: response
         """
+        logging.debug(f"{self.uid} awaiting client response.")
         if act_on is not None:
             await self.send({
                 'type': 'ACTION_AWAITED',
@@ -100,6 +108,9 @@ class Player:
         is_correct_response = False
         while not is_correct_response:
             response = await self._responses.get()
+
+            logging.debug(f"{self.uid} received client response.")
+
             failed = False
             messages = []
             for validator in validators:
@@ -110,6 +121,7 @@ class Player:
             if not failed:
                 is_correct_response = True
             else:
+                logging.debug(f"{self.uid} received bad client response.")
                 await self.socket.send_json({"type": "ERROR",
                                              "messages": messages})
         return response['data']

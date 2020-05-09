@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import aiohttp
 from aiohttp import web
@@ -12,18 +13,18 @@ async def join_game_route(request):
     """
     # FIXME: better solution
     if 'username' in request.query:
-        print(f'Received join request with username: creating user. {request.query}')
+        logging.debug(f'Received join request with username: creating user. {request.query}')
         return await join_game(request)
     else:
-        print(f"Received socket request with {request.query}")
+        logging.debug(f"Received socket request with {request.query}")
         return await join_round_socket(request)
 
 
 async def join_round_socket(request):
     ws = web.WebSocketResponse()
-    print(f'Created the websocket object: {ws}')
+    logging.debug(f'Created the websocket object: {ws}')
     await ws.prepare(request)
-    print(f'Prepared the websocket connection: {ws}')
+    logging.debug(f'Prepared the websocket connection: {ws}')
 
     round_id = request.match_info['round_id']
 
@@ -62,20 +63,19 @@ async def join_round_socket(request):
     async for msg in ws:
         if msg.type == aiohttp.WSMsgType.TEXT:
             if msg.data == 'CLOSE':
-                print("=SERVER= CLOSE")
                 player.disconnect()
                 await asyncio.gather(*[p.socket.send_json({"type": "PLAYER_DISCONNECTED", "username": player.username})
                                        for p in game.players.values() if p.connected])
                 await ws.close()
             else:
                 json_msg = msg.json()
+                logging.info(f"WS Received by {player_id}")
+                logging.debug(json_msg)
                 if type(json_msg) == dict and "type" in json_msg:
-                    print("Server received", json_msg)
                     if json_msg['type'] == 'PING':
                         await ws.send_json({"type": "PONG"})
                     # Start the game
                     elif json_msg['type'] == "START_GAME" and game.created_by == player.username and not game.started:
-                        print("=SERVER= START_GAME")
                         await asyncio.gather(*[p.send({"type": "GAME_STARTED"})
                                                for p in game.players.values()])
                         asyncio.create_task(game.start())
@@ -88,8 +88,7 @@ async def join_round_socket(request):
                         await player.push_response(json_msg)
                 # await ws.send_str(msg.data + '/answer')
         elif msg.type == aiohttp.WSMsgType.ERROR:
-            print('ws connection closed with exception %s' %
-                  ws.exception())
+            logging.exception(f'ws connection closed with exception {ws.exception()}')
             player.disconnect()
             await asyncio.gather(*[p.send({"type": "PLAYER_DISCONNECTED", "username": player.username})
                                    for p in game.players.values()])
@@ -98,6 +97,7 @@ async def join_round_socket(request):
 
 
 async def join_game(request):
+    logging.info(f"Request: {request.url}")
     username = request.query['username'] if 'username' in request.query else None
     round_id = request.match_info['round_id']
     return add_player_to_round(request, round_id, username)

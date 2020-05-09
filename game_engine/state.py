@@ -1,3 +1,4 @@
+import logging
 from copy import deepcopy
 from typing import Dict, List
 
@@ -58,8 +59,8 @@ class FiniteStateMachine:
             await node.setup()
             new_node = await node.handle()
         except Exception as e:
-            print("Node failed to execute: ", str(e))
-            print("Reverting to previous state.")
+            logging.exception(e)
+            logging.info("Reverting to previous state.")
 
             # Retry
             # TODO: manage error
@@ -102,6 +103,7 @@ class Node:
 
     async def setup(self):
         assert self.env is not None, "Environment is not set."
+        logging.info(f"Game {self.env.round_id} node {self.name} setting up.")
 
         self.step_state()
 
@@ -109,6 +111,7 @@ class Node:
             await self.setup_fn(self)
 
     def revert(self):
+        logging.info(f"Game {self.env.round_id} node {self.name} reverting to previous state.")
         self.state_history.pop()
         if not len(self.state_history):
             self.state_history = [self._original_state.copy()]
@@ -140,6 +143,7 @@ class Node:
 
         # Transition
         next_node_name = await self.execute_transition()
+        logging.info(f"Game {self.env.round_id} node {self.name} transitioning to {next_node_name}. Executing actions.")
         next_node = self.env.state_machine.nodes[next_node_name]
         for action in self.edges[next_node_name]['actions']:
             await action(self, next_node)

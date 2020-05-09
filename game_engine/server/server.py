@@ -1,5 +1,6 @@
 import traceback
 import uuid
+import logging
 
 from aiohttp import web
 
@@ -8,6 +9,8 @@ from game_engine.server.utils import generate_username, add_player_to_round, get
 
 
 async def start_game(request):
+    logging.info(f"Request: {request.url}")
+
     form = await request.json()
     form = dict(form)
     game_id = request.match_info['game_id']
@@ -19,23 +22,26 @@ async def start_game(request):
     is_game_public = form['public']
     round_id = uuid.uuid4().hex
     game_conf = get_game_from_game_id(game_id)
+    logging.debug("Game conf")
+    logging.debug(game_conf)
     if game_conf is not None:
         game_class = game_conf['game_env']['__class']
         try:
             request.app['games'][round_id] = game_class(round_id, creator_username, is_game_public)
         except Exception as e:
-            traceback.print_tb(e.__traceback__)
-            print(e)
+            # traceback.print_tb(e.__traceback__)
+            logging.exception(e)
             return web.json_response({"message": f"An unexpected error has occurred. \n {e}"}, status=500)
     else:
         return web.json_response({"message": "Game does not exists."}, status=404)
 
     response = add_player_to_round(request, round_id, creator_username)
-    print(f'Creating game: {response}')
+    logging.info(f'Creating game: {response}')
     return response
 
 
 async def list_rounds(request):
+    logging.info(f"Request: {request.url}")
     games = []
     for round_id, game in request.app['games'].items():
         if game.is_public:
@@ -51,6 +57,7 @@ async def list_rounds(request):
 
 
 async def list_games(request):
+    logging.info(f"Request: {request.url}")
     available_games = get_available_games()
     games = []
     for game in available_games:
@@ -65,6 +72,7 @@ async def list_games(request):
 
 
 async def game_info(request):
+    logging.info(f"Request: {request.url}")
     game_id = request.match_info['game_id']
     game = get_game_from_game_id(game_id)
     if game is not None:

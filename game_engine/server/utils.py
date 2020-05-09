@@ -1,4 +1,5 @@
 import importlib.util
+import logging
 import os
 import uuid
 
@@ -103,6 +104,7 @@ def get_available_games():
     Loads and returns games in the games folder.
     """
     games = []
+    logging.debug(f"Loading games from {str(games_folder)}")
     for folder in games_folder.iterdir():
         if folder.is_dir():
             for file in folder.iterdir():
@@ -117,6 +119,9 @@ def get_available_games():
                         game_env = importlib.util.module_from_spec(spec)
                         spec.loader.exec_module(game_env)
                         yaml_config['game_env']['__class'] = getattr(game_env, yaml_config['game_env']['name'])
+
+                        logging.debug(f"Found game {yaml_config['game_env']['__class'].game_id}")
+
                         games.append(make_game_config(yaml_config))
     return games
 

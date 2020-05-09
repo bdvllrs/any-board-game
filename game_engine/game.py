@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import logging
 from copy import deepcopy
 
 from .state import FiniteStateMachine
@@ -58,10 +59,14 @@ class GameEnv:
 
     async def start(self):
         self.started = True
+        logging.info(f"Starting game {self.round_id}.")
 
+        logging.info(f"Setting game {self.round_id} up.")
         await self.setup()
 
         async for node in self.state_machine:
+            logging.info(f"Game {self.round_id} enters node {node}")
+
             await asyncio.gather(*[player.update_interface(self.state_machine.nodes[node])
                                    for player in self.players.values()])
 
