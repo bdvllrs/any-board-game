@@ -18,8 +18,9 @@ async def start_game(request):
     creator_username = form['username']
     is_game_public = form['public']
     round_id = uuid.uuid4().hex
-    game_class = get_game_from_game_id(game_id)['game_env']['__class']
-    if game_class is not None:
+    game_conf = get_game_from_game_id(game_id)
+    if game_conf is not None:
+        game_class = game_conf['game_env']['__class']
         try:
             request.app['games'][round_id] = game_class(round_id, creator_username, is_game_public)
         except Exception as e:
