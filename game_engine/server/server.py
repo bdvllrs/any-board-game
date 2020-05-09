@@ -3,9 +3,8 @@ import uuid
 
 from aiohttp import web
 
-from game_engine.games.bataille.game import BatailleGame
 from game_engine.server.join_round import join_game_route
-from game_engine.server.utils import generate_username, add_player_to_round
+from game_engine.server.utils import generate_username, add_player_to_round, get_game_from_game_id, get_available_games
 
 
 async def start_game(request):
@@ -19,10 +18,10 @@ async def start_game(request):
     creator_username = form['username']
     is_game_public = form['public']
     round_id = uuid.uuid4().hex
-    # TODO: automatically load all game in the folder
-    if game_id == "bataille":
+    game_class = get_game_from_game_id(game_id)['game_env']['__class']
+    if game_class is not None:
         try:
-            request.app['games'][round_id] = BatailleGame(round_id, creator_username, is_game_public)
+            request.app['games'][round_id] = game_class(round_id, creator_username, is_game_public)
         except Exception as e:
             traceback.print_tb(e.__traceback__)
             print(e)
@@ -50,6 +49,35 @@ async def list_rounds(request):
     return web.json_response(games)
 
 
+async def list_games(request):
+    available_games = get_available_games()
+    games = []
+    for game in available_games:
+        games.append({
+            'gameId': game['game_env']['__class'].game_id,
+            'rules': game['rules'],
+            'description': game['description'],
+            'min_players': game['game_env']['__class'].min_players,
+            'max_players': game['game_env']['__class'].max_players
+        })
+    return web.json_response(games)
+
+
+async def game_info(request):
+    game_id = request.match_info['game_id']
+    game = get_game_from_game_id(game_id)
+    if game is not None:
+        infos = {
+            'gameId': game['game_env']['__class'].game_id,
+            'rules': game['rules'],
+            'description': game['description'],
+            'min_players': game['game_env']['__class'].min_players,
+            'max_players': game['game_env']['__class'].max_players
+        }
+        return web.json_response(infos)
+    return web.json_response({"message": "Game does not exists."}, status=404)
+
+
 def make_app():
     app = web.Application()
     app['games'] = dict()
@@ -57,7 +85,9 @@ def make_app():
     app.add_routes([
         web.get("/round/{round_id}/join", join_game_route),
         web.post('/round/create/{game_id}', start_game),
-        web.get('/round/list', list_rounds)
+        web.get('/round/list', list_rounds),
+        web.get('/game/list', list_games),
+        web.get('/game/{game_id}', game_info),
     ])
 
     return app

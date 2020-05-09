@@ -5,7 +5,7 @@ import numpy as np
 
 from game_engine.games.bataille.game import BatailleGame
 from game_engine.players import Player
-from game_engine.server import make_app, initialize_server
+from game_engine.server import make_app, initialize_start_game
 
 
 async def test_bataille_game_setup():
@@ -58,21 +58,25 @@ async def bataille_player(client, round_id, player_id, is_master=False):
                     assert msg_json['type'] != "ERROR"
 
                     if msg_json['type'] == 'CLOSE':
-                        print("closed")
+                        print(f"=CLIENT {player_id}=  CLOSE")
                         break
                     elif msg_json['type'] == 'PLAYER_CONNECTED':
+                        print(f"=CLIENT {player_id}=  PLAYER_CONNECTED")
+                        print(msg_json)
                         connected_players.append(msg_json)
                         if is_master and len(connected_players) == 3:
                             await ws.send_json({"type": "START_GAME"})
                     elif msg_json['type'] == 'INTERFACE_UPDATE':
-                        print("Interface Updated")
+                        print(f"=CLIENT {player_id}=  INTERFACE_UPDATE")
+                        print(msg_json)
                         assert 'components' in msg_json
                         assert 'played_cards' in msg_json['components']
                         assert 'hand' in msg_json['components']
                         played_cards = msg_json['components']['played_cards']['cards']
                         player_hand = msg_json['components']['hand']['cards']
                     elif msg_json['type'] == 'ACTION_AWAITED':
-                        print("Do action")
+                        print(f"=CLIENT {player_id}=  ACTION_AWAITED")
+                        print(msg_json)
                         assert 'on' in msg_json
                         assert msg_json['on'] == ['hand']
 
@@ -83,7 +87,8 @@ async def bataille_player(client, round_id, player_id, is_master=False):
                             "data": picked_card
                         })
                     elif msg_json['type'] == 'GAME_FINISHED':
-                        print("Game finished")
+                        print(f"=CLIENT {player_id}=  GAME_FINISHED")
+                        print(msg_json)
                         assert 'winners' in msg_json
                         winners = msg_json['winners']
                         break
@@ -107,7 +112,7 @@ async def test_bataille_game(aiohttp_client, loop):
 
     game_name = "bataille"
     usernames = ["test1", "test2", "test3"]
-    round_id, clients, response_data = await initialize_server(app, aiohttp_client, game_name, usernames)
+    round_id, clients, response_data = await initialize_start_game(app, aiohttp_client, game_name, usernames)
 
     await asyncio.gather(*[bataille_player(clients[username],
                                            round_id,

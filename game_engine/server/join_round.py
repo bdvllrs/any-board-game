@@ -62,6 +62,7 @@ async def join_round_socket(request):
     async for msg in ws:
         if msg.type == aiohttp.WSMsgType.TEXT:
             if msg.data == 'CLOSE':
+                print("=SERVER= CLOSE")
                 player.disconnect()
                 await asyncio.gather(*[p.socket.send_json({"type": "PLAYER_DISCONNECTED", "username": player.username})
                                        for p in game.players.values() if p.connected])
@@ -74,6 +75,7 @@ async def join_round_socket(request):
                         await ws.send_json({"type": "PONG"})
                     # Start the game
                     elif json_msg['type'] == "START_GAME" and game.created_by == player.username and not game.started:
+                        print("=SERVER= START_GAME")
                         await asyncio.gather(*[p.send({"type": "GAME_STARTED"})
                                                for p in game.players.values()])
                         asyncio.create_task(game.start())

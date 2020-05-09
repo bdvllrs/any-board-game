@@ -2,7 +2,7 @@ import asyncio
 
 import aiohttp
 
-from game_engine.server import make_app, initialize_server
+from game_engine.server import make_app, initialize_start_game
 
 
 async def test_create_and_join_round(aiohttp_client, loop):
@@ -78,7 +78,7 @@ async def send_receive_chat(client, round_id, player_id, username):
 async def test_chat_feature(aiohttp_client, loop):
     app = make_app()
     usernames = ['player 1', 'player 2']
-    round_id, clients, responses = await initialize_server(app, aiohttp_client, 'bataille', usernames)
+    round_id, clients, responses = await initialize_start_game(app, aiohttp_client, 'bataille', usernames)
 
     await asyncio.gather(*[send_receive_chat(clients[username],
                                              round_id,
@@ -87,11 +87,11 @@ async def test_chat_feature(aiohttp_client, loop):
                            for username in usernames])
 
 
-async def test_list_games(aiohttp_client, loop):
+async def test_list_rounds(aiohttp_client, loop):
     app = make_app()
     usernames = ["player1", "player2"]
     game_id = "bataille"
-    await initialize_server(app, aiohttp_client, game_id, usernames, {'public': True})
+    await initialize_start_game(app, aiohttp_client, game_id, usernames, {'public': True})
     client = await aiohttp_client(app)
     response = await client.get("/round/list")
     response_data = await response.json()
@@ -99,3 +99,30 @@ async def test_list_games(aiohttp_client, loop):
     assert len(response_data) == 1
     assert response_data[0]['gameId'] == game_id
     assert response_data[0]['players'] == usernames
+
+
+async def test_list_games(aiohttp_client, loop):
+    app = make_app()
+    client = await aiohttp_client(app)
+    response = await client.get("/game/list")
+    response_data = await response.json()
+    assert type(response_data) == list
+    assert len(response_data)
+    for game in response_data:
+        assert 'gameId' in game
+        assert 'description' in game
+        assert 'rules' in game
+        assert 'min_players' in game
+        assert 'max_players' in game
+
+
+async def test_game_info(aiohttp_client, loop):
+    app = make_app()
+    client = await aiohttp_client(app)
+    response = await client.get("/game/list")
+    available_games = await response.json()
+    response = await client.get(f"/game/{available_games[0]['gameId']}")
+    game = await response.json()
+    for key, value in available_games[0].items():
+        assert key in game
+        assert game[key] == value

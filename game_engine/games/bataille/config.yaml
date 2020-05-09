@@ -1,0 +1,6 @@
+rule_book: rules.md
+description: Jeu pour débugger.
+
+game_env:
+  name: BatailleGame
+  location: game.py
