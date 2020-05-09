@@ -151,7 +151,7 @@ async def start_game(request):
     if 'public' not in form:
         form['public'] = False
     creator_username = form['username']
-    is_game_public = form['public']  # TODO: public game is_game_public = False
+    is_game_public = form['public']
     round_id = uuid.uuid4().hex
     # TODO: automatically load all game in the folder
     if game_id == "bataille":
@@ -169,6 +169,22 @@ async def start_game(request):
     return response
 
 
+@routes.get('/round/list')
+async def list_rounds(request):
+    games = []
+    for round_id, game in request.app['games'].items():
+        if game.is_public:
+            games.append({
+                'gameId': game.game_id,
+                'roundId': round_id,
+                'started': game.started,
+                'players': [player.username for player in game.players.values()],
+                'createdOn': str(game.created_on),
+                'createdBy': game.created_by
+            })
+    return web.json_response(games)
+
+
 def make_app():
     app = web.Application()
     app['games'] = dict()
@@ -176,8 +192,8 @@ def make_app():
     return app
 
 
-async def initialize_server(aiohttp_client, game_name, usernames):
-    app = make_app()
+async def initialize_server(app, aiohttp_client, game_name, usernames, create_round_params=None):
+    create_round_params = {} if create_round_params is None else create_round_params
 
     username_master = usernames[0]
     clients = dict()
@@ -186,8 +202,9 @@ async def initialize_server(aiohttp_client, game_name, usernames):
     for username in usernames:
         clients[username] = await aiohttp_client(app)
 
+    create_round_params.update(dict(username=username_master))
     responses[username_master] = await clients[username_master].post(f"/round/create/{game_name}",
-                                                                     json=dict(username=username_master))
+                                                                     json=create_round_params)
     responses_data[username_master] = await responses[username_master].json()
 
     round_id = responses_data[username_master]['id']

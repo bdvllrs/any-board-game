@@ -76,11 +76,26 @@ async def send_receive_chat(client, round_id, player_id, username):
 
 
 async def test_chat_feature(aiohttp_client, loop):
+    app = make_app()
     usernames = ['player 1', 'player 2']
-    round_id, clients, responses = await initialize_server(aiohttp_client, 'bataille', usernames)
+    round_id, clients, responses = await initialize_server(app, aiohttp_client, 'bataille', usernames)
 
     await asyncio.gather(*[send_receive_chat(clients[username],
                                              round_id,
                                              responses[username]['playerId'],
                                              username)
                            for username in usernames])
+
+
+async def test_list_games(aiohttp_client, loop):
+    app = make_app()
+    usernames = ["player1", "player2"]
+    game_id = "bataille"
+    await initialize_server(app, aiohttp_client, game_id, usernames, {'public': True})
+    client = await aiohttp_client(app)
+    response = await client.get("/round/list")
+    response_data = await response.json()
+    assert type(response_data) == list
+    assert len(response_data) == 1
+    assert response_data[0]['gameId'] == game_id
+    assert response_data[0]['players'] == usernames

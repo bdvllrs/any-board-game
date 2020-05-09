@@ -103,10 +103,11 @@ async def bataille_player(client, round_id, player_id, is_master=False):
 
 async def test_bataille_game(aiohttp_client, loop):
     np.random.seed(0)
+    app = make_app()
 
     game_name = "bataille"
     usernames = ["test1", "test2", "test3"]
-    round_id, clients, response_data = await initialize_server(aiohttp_client, game_name, usernames)
+    round_id, clients, response_data = await initialize_server(app, aiohttp_client, game_name, usernames)
 
     await asyncio.gather(*[bataille_player(clients[username],
                                            round_id,
