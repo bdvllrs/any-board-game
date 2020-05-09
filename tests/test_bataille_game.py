@@ -3,9 +3,9 @@ import asyncio
 import aiohttp
 import numpy as np
 
-from game_engine.games.bataille.main import BatailleGame
+from game_engine.games.bataille.game import BatailleGame
 from game_engine.players import Player
-from game_engine.server import initialize_server, make_app
+from game_engine.server import make_app, initialize_server
 
 
 async def test_bataille_game_setup():
