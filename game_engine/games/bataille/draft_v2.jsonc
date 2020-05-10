@@ -1,0 +1,91 @@
+[
+    {
+        "type": "INTERFACE_UPDATE",
+        "components": [
+            {
+                "id": "played_cards",
+                "position": "bottom",
+                "visible": true,
+            },
+            {
+                "id": "hand",
+                "position": "bottom",
+                "visible": true,
+            }
+        ]
+    },
+    {
+        "type": "COMPONENTS_UPDATES",
+        "components": [
+            {
+                "type": "Create",
+                "id": "played_cards",
+                "component": {
+                    "type": "CardDeck",
+                    "cards": []
+                }
+            },
+            {
+                "type": "Create",
+                "id": "hand",
+                "component": {
+                    "type": "CardDeck",
+                    "cards": ["2", "3"]
+                }
+            },
+            {
+                "type": "Create",
+                "id": "2",
+                "component": {
+                    "type": "Card",
+                    "name": "Ace of Spades"
+                }
+            },
+            {
+                "type": "Create",
+                "id": "3",
+                "component": {
+                    "type": "Card",
+                    "name": "2 of Clubs"
+                }
+            },
+            {
+                "type": "Create",
+                "id": "4",
+                "component": {
+                    "type": "Card",
+                    "name": "8 of Hearts"
+                }
+            },
+            {
+                "type": "Update",
+                "id": "hand",
+                "component": {
+                    "type": "CardDeck",
+                    "cards": ["2", "4"]
+                }
+            },
+            {
+                "type": "Delete",
+                "id": "3"
+            }
+        ]
+    },
+    {
+        "type": "ACTION_AWAITED",
+        "all_of": [
+            {
+                "type": "OnClick",
+                "target_component": "hand"
+            },
+            {
+                "type": "Prompt",
+                "what": "int"
+            }
+        ]
+    },
+    {
+        "type": "ACTION_RESPONSE",
+        "hand": "2"
+    }
+]
