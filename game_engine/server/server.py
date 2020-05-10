@@ -105,7 +105,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description="AnyBoardGame")
-    parser.add_argument('--port', '-p', type=int, default=8080,
+    parser.add_argument('--port', '-p', type=int, default=42802,
                         help='Port of the application.')
     args = parser.parse_args()
 
