@@ -32,6 +32,7 @@ async def join_round_socket(request):
 
     # Check that the query and given information is correct
     if 'playerId' not in query:
+        logging.error("PlayerId is required to join the socket.")
         await ws.send_json({"status": 403, "message": "PlayerId is required."})
         await ws.close()
         return ws
@@ -39,6 +40,8 @@ async def join_round_socket(request):
     player_id = query['playerId']
 
     if round_id not in request.app['games'].keys():
+        logging.error(f"RoundId {round_id} does not exist. "
+                      f"Available round_ids: {', '.join(request.app['games'].keys())}.")
         await ws.send_json({"status": 403, "message": "RoundId is incorrect."})
         await ws.close()
         return ws
@@ -46,6 +49,8 @@ async def join_round_socket(request):
     game = request.app['games'][round_id]
 
     if player_id not in game.players:
+        logging.error(f"Player {player_id} has not join the game yet. "
+                      f"Do a request `GET /round/{round_id}/join` first.")
         await ws.send_json({"status": 403, "message": "Player has not joined the game."})
         await ws.close()
         return ws

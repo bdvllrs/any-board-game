@@ -66,13 +66,17 @@ def add_player_to_round(request, round_id, username):
     game = request.app['games'][round_id]
 
     if game.started:
+        logging.error("Player cannot enter an already started game.")
         return web.json_response({"message": "Game has already started."}, status=403)
     if username in map(lambda u: u.username, game.players.values()):
-        return web.json_response({"message": f"Username {username} already exists."}, status=403)
+        logging.error(f"{username} is already taken. Choose another one.")
+        return web.json_response({"message": f"Username {username} is already taken."}, status=403)
     player_id = uuid.uuid4().hex
     player = Player(username, player_id)
     is_added = game.add_player(player)
     if not is_added:
+        logging.error("Player cannot enter this game."
+                      "Because there are already to many player or does't fit the GameEnv.can_add_player condition.")
         return web.json_response({"message": f"You cannot enter the game."}, status=403)
     return web.json_response({"playerId": player_id,
                               "id": round_id,

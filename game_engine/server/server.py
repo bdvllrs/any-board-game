@@ -32,6 +32,7 @@ async def start_game(request):
             logging.exception(e)
             return web.json_response({"message": f"An unexpected error has occurred. \n {e}"}, status=500)
     else:
+        logging.error(f"Game {game_id} does not exsis.")
         return web.json_response({"message": "Game does not exists."}, status=404)
 
     response = add_player_to_round(request, round_id, creator_username)
