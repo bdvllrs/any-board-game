@@ -10,7 +10,7 @@ from game_engine.utils import games_folder
 
 
 async def test_bataille_game_setup():
-    assert len(list(games_folder)) == 6
+    assert len(list(games_folder.iterdir())) == 6
     assert str(games_folder) == "/home/runner/work/GameEngine/GameEngine/game_engine/games"
     num_players = 2
     game_instance = BatailleGame("0", "player0", False)
