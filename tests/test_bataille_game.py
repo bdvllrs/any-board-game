@@ -24,16 +24,19 @@ async def test_bataille_game_setup():
     assert len(game_instance.state['hands']) == len(game_instance.players)
 
 
-def choose_card_to_play(hand, played_cards):
+def choose_card_to_play(hand, played_cards, cards):
     # If has one spade, plays it
-    for card in hand:
-        if card['suit'] == 'S':
-            return card
+    for card_id in hand:
+        card = cards[card_id]
+        if card['state']['suit'] == 'S':
+            return card_id
     # Or look for card that doesn't make you lose
-    for card in hand:
-        for played_card in played_cards:
-            if card['value'] > played_card['value']:
-                return card
+    for card_id in hand:
+        card = cards[card_id]
+        for played_card_id in played_cards:
+            played_card = cards[played_card_id]
+            if int(card['state']['value']) > int(played_card['state']['value']):
+                return card_id
     # Or random card
     return hand[0]
 
@@ -44,6 +47,8 @@ async def bataille_player(client, round_id, player_id, is_master=False):
         connected_players = []
         player_hand = []
         played_cards = []
+        cards = {}
+
         winners = None
 
         num_steps = 0
@@ -66,25 +71,45 @@ async def bataille_player(client, round_id, player_id, is_master=False):
                         connected_players.append(msg_json)
                         if is_master and len(connected_players) == 3:
                             await ws.send_json({"type": "START_GAME"})
+                    elif msg_json['type'] == 'COMPONENTS_UPDATES':
+                        print(f"=CLIENT {player_id}=  COMPONENTS_UPDATES")
+                        print(msg_json)
+                        assert 'components' in msg_json
+                        for component in msg_json['components']:
+                            if component['type'] in ['Create', 'Update']:
+                                assert 'id' in component
+                                assert 'component' in component
+                                assert 'type' in component['component']
+                                if component['id'] == 'played_cards':
+                                    played_cards = component['component']['cards']
+                                elif component['id'] == 'hand':
+                                    player_hand = component['component']['cards']
+                                elif component['component']['type'] == 'Card':
+                                    cards[component['id']] = component['component']
+                            elif component['type'] == "Delete":
+                                # TODO
+                                pass
                     elif msg_json['type'] == 'INTERFACE_UPDATE':
                         print(f"=CLIENT {player_id}=  INTERFACE_UPDATE")
                         print(msg_json)
                         assert 'components' in msg_json
-                        assert 'played_cards' in msg_json['components']
-                        assert 'hand' in msg_json['components']
-                        played_cards = msg_json['components']['played_cards']['cards']
-                        player_hand = msg_json['components']['hand']['cards']
                     elif msg_json['type'] == 'ACTION_AWAITED':
                         print(f"=CLIENT {player_id}=  ACTION_AWAITED")
                         print(msg_json)
-                        assert 'on' in msg_json
-                        assert msg_json['on'] == ['hand']
+                        assert 'all_of' in msg_json
+                        assert type(msg_json['all_of']) == list
+                        assert len(msg_json['all_of']) == 1
+                        action = msg_json['all_of'][0]
+                        assert 'type' in action
+                        assert 'target_component' in action
+                        assert action['type'] == "OnClick"
+                        assert action['target_component'] == 'hand'
 
-                        picked_card = choose_card_to_play(player_hand, played_cards)
+                        picked_card = choose_card_to_play(player_hand, played_cards, cards)
 
                         await ws.send_json({
                             "type": "ACTION_RESPONSE",
-                            "data": picked_card
+                            "hand": picked_card
                         })
                     elif msg_json['type'] == 'GAME_FINISHED':
                         print(f"=CLIENT {player_id}=  GAME_FINISHED")

@@ -26,9 +26,14 @@ async def play_node_setup(node):
     # We will now await a response from that player
     # Note that we added a validator. This will then wait for a specific response from the client.
     # This validator checks that the given card is owned by the player
-    response = await player.response(validators=[PlayResponseValidator(node)],
-                                     act_on=['hand'])
-    card = response  # This is a Card object thanks to the validator
+    response = await player.client_action({
+        "all_of": [{
+            "type": "OnClick",
+            "target_component": "hand"
+        }]
+    }, validators=[PlayResponseValidator(node)])
+
+    card = response['hand']  # This is a Card object
 
     node.env.state['played_card_to_player'][card.name] = player_uid
     node.env.state['played_cards'].add([card])
@@ -74,4 +79,3 @@ async def new_turn_end_action(node, next_node):
         hand = node.env.state['hands'][player_uid]
         if not len(hand):
             node.env.add_winner(player)
-

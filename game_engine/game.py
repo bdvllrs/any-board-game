@@ -3,6 +3,7 @@ import datetime
 import logging
 from copy import deepcopy
 
+from .components.component import ComponentRegistry
 from .state import FiniteStateMachine
 
 
@@ -55,7 +56,7 @@ class GameEnv:
         return len(self.players) < self.max_players
 
     def bind_interface(self, node, player):
-        return player.interfaces[player.current_interface]
+        return player.current_interface
 
     async def start(self):
         self.started = True

@@ -8,7 +8,9 @@ class Card(Component):
                  description: str = "",
                  front_image: str = None,
                  back_image: str = None,
-                 state=None):
+                 state=None,
+                 interface_state=None):
+        super().__init__(interface_state)
         self.back_image = back_image
         self.front_image = front_image
         self.description = description
@@ -17,7 +19,8 @@ class Card(Component):
 
 
 class CardDeck(Component):
-    def __init__(self, cards=None, from_yaml=None):
+    def __init__(self, cards=None, from_yaml=None, interface_state=None):
+        super().__init__(interface_state)
         self.cards = cards or []
         if from_yaml is not None:
             self.import_yaml(from_yaml)
@@ -34,9 +37,15 @@ class CardDeck(Component):
                 if not isinstance(card, card_type):
                     raise ValueError(f"All cards should have the same type {card_type}")
 
+    def get_sub_components(self):
+        components = [self]
+        for card in self.cards:
+            components.extend(card.get_sub_components())
+        return components
+
     @property
     def interface_description(self):
-        return {'cards': [card.interface_description for card in self.cards]}
+        return {'cards': [card.id for card in self.cards]}
 
     @property
     def on_action(self):

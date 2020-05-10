@@ -2,6 +2,21 @@ import asyncio
 import logging
 from copy import deepcopy
 
+from game_engine.validators import ValidationException
+
+
+def action_to_components(action_request, action_response, interface):
+    response = {}
+    for action in action_request['all_of']:
+        if action['type'] == "OnClick":
+            target_component = action['target_component']
+
+            if target_component not in action_response.keys():
+                raise ValueError()
+
+            response[target_component] = interface.get_component(action_response[target_component])
+    return response
+
 
 class Player:
     def __init__(self, username, uid):
@@ -21,15 +36,14 @@ class Player:
     def add_interface(self, interface, is_default=False):
         self.interfaces[interface.name] = interface
         if is_default:
-            self.default_interface = interface.name
-            self.current_interface = self.default_interface
+            self.current_interface = interface
 
     def set_env(self, env):
         self.env = env
 
     async def update_interface(self, node):
         interface = self.env.bind_interface(node, self)
-        self.current_interface = interface.name
+        self.current_interface = interface
         await self.switch_interface(interface)
 
     @property
@@ -58,11 +72,17 @@ class Player:
             await self.send(message)
 
     async def switch_interface(self, interface):
+        # First add components
+        await self.send({
+            "type": "COMPONENTS_UPDATES",
+            "components": interface.get_components_update()
+        })
+        # Then interface
         await self.send({
             "type": "INTERFACE_UPDATE",
             **interface.get_client_update()
         })
-        self.current_interface = interface.name
+        self.current_interface = interface
 
     async def send(self, message):
         """
@@ -89,39 +109,50 @@ class Player:
         """
         await self._responses.put(response)
 
-    async def response(self, validators=None, act_on=None):
+    async def client_action(self, action, validators=None):
         """
-        Asks for a response from the client
+        Asks for a client action from the client
         Args:
+            action: if provided, specifies to the client on what component he should act on.
             validators: list of validators to use
-            act_on: if provided, specifies to the client on what component he should act on.
 
         Returns: response
         """
         logging.debug(f"{self.uid} awaiting client response.")
-        if act_on is not None:
-            await self.send({
-                'type': 'ACTION_AWAITED',
-                'on': act_on
-            })
 
-        is_correct_response = False
-        while not is_correct_response:
+        await self.send({
+            'type': 'ACTION_AWAITED',
+            **action
+        })
+
+        while True:
             response = await self._responses.get()
 
             logging.debug(f"{self.uid} received client response.")
 
             failed = False
             messages = []
-            for validator in validators:
-                response = validator.validate(response)
-                if validator.failed:
-                    failed = True
-                    messages.append(validator.get_message())
-            if not failed:
-                is_correct_response = True
+
+            try:
+                transformed_response = action_to_components(action, response, self.current_interface)
+            except ValueError:
+                failed = True
+                messages.append("Response format incorrect.")
             else:
+                validators = validators or dict()
+
+                for key, sub_response in transformed_response.items():
+                    if key in validators:
+                        try:
+                            transformed_response[key] = validators[key].validate(transformed_response[key])
+                        except ValidationException as e:
+                            failed = True
+                            messages.append(str(e))
+                if not failed:
+                    break
+
+            if failed:
                 logging.debug(f"{self.uid} received bad client response.")
                 await self.socket.send_json({"type": "ERROR",
                                              "messages": messages})
-        return response['data']
+        return transformed_response

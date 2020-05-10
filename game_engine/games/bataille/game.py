@@ -1,6 +1,6 @@
 from game_engine.components.cards import CardDeck
-from game_engine.game import GameEnv
 from game_engine.games.bataille.card import Card
+from game_engine.game import GameEnv
 from game_engine.games.bataille.interfaces import PlayerInterface
 from game_engine.games.bataille.utils import new_turn_setup, play_node_setup, new_turn_end_condition, \
     play_new_turn_condition, set_player_in_node_state_action, play_new_turn_action
@@ -28,8 +28,11 @@ class BatailleGame(GameEnv):
         # These will stay constant throughout the game.
         self.card_suits = ["H", "C", "S"]
         self.card_numbers = list(map(str, [1, 2]))
+        # Here we will create a component CardDeck.
+        # Every component should be put in the component registry `self.components` that handles components.
+        # We recommend using self.components.create(ComponentClass, *params) to automatically keep track of them.
         self.playing_cards = CardDeck([
-            Card(suit, number)
+            Card(suit + number, state={"suit": suit, "value": number})
             for number in self.card_numbers for suit in self.card_suits
         ])
 
