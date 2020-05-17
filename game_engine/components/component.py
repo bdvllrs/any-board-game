@@ -1,22 +1,6 @@
+import asyncio
 import inspect
 import uuid
-from copy import deepcopy
-
-
-class ComponentRegistry:
-    def __init__(self):
-        self.components = {}
-
-    def create(self, component_class, *params, **kwargs):
-        component = component_class(*params, **kwargs)
-        self.update(component)
-        return component.id
-
-    def update(self, component):
-        self.components[component.id] = component
-
-    def get_component_copy(self, component_id):
-        return deepcopy(self.components[component_id])
 
 
 class Component:
@@ -30,14 +14,62 @@ class Component:
 
         self.interface_state.update(interface_state)
 
-    async def on_create(self):
-        pass
+        self.subscribers = {}
 
-    async def on_update(self):
-        pass
+    async def subscribe(self, player, on_create=True):
+        """
+        Adds a player to the list of subscribed player of this component.
+        Args:
+            player:
+            on_create: if true, will send an on_create event
+        """
+        self.subscribers[player.uid] = player
+        for component in self.get_sub_components():
+            if component is not self:
+                await component.subscribe(player, False)
+        # Setup
+        if on_create:
+            await self.on_create([player])
 
-    async def on_delete(self):
-        pass
+    async def unsubscribe(self, player, on_delete=True):
+        if player.uid in self.subscribers:
+            del self.subscribers[player.uid]
+        for component in self.get_sub_components():
+            if component is not self:
+                await component.unsubscribe(player, False)
+        # Cleanup
+        if on_delete:
+            await self.on_delete([player])
+
+    async def on_create(self, subscribers=None):
+        components = []
+        for component in self.get_sub_components():
+            component_description = component.interface_description
+            components.append({
+                'type': 'Create',
+                'id': component.id,
+                'component': component_description
+            })
+        await self.on_change(components, subscribers)
+
+    async def on_change(self, components, subscribers=None):
+        subscribers = subscribers or self.subscribers.values()
+        await asyncio.gather(*[player.components_update(components)
+                               for player in subscribers])
+
+    async def on_update(self, subscribers=None):
+        components = [{
+            'type': 'Update',
+            'id': self.id,
+            'component': self.interface_description
+        }]
+        await self.on_change(components, subscribers)
+
+    async def on_delete(self, subscribers=None):
+        await self.on_change([{
+            'type': 'Delete',
+            'id': self.id
+        }], subscribers)
 
     def get_sub_components(self):
         """
@@ -51,6 +83,7 @@ class Component:
         for param in list(signature.parameters.values()):
             if param.name != 'interface_state' and hasattr(self, param.name):
                 description[param.name] = getattr(self, param.name)
+        description['type'] = self.__class__.__name__
         return description
 
     @property

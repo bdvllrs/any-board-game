@@ -36,14 +36,13 @@ class Player:
     def add_interface(self, interface, is_default=False):
         self.interfaces[interface.name] = interface
         if is_default:
-            self.current_interface = interface
+            self.default_interface = interface
 
     def set_env(self, env):
         self.env = env
 
     async def update_interface(self, node):
         interface = self.env.bind_interface(node, self)
-        self.current_interface = interface
         await self.switch_interface(interface)
 
     @property
@@ -72,17 +71,24 @@ class Player:
             await self.send(message)
 
     async def switch_interface(self, interface):
-        # First add components
-        await self.send({
-            "type": "COMPONENTS_UPDATES",
-            "components": interface.get_components_update()
-        })
+        if interface is not self.current_interface:
+            if self.current_interface is not None:
+                await self.current_interface.unsubscribe_to_components(self)
+            self.current_interface = interface
+            await interface.subscribe_to_components(self)
         # Then interface
         await self.send({
             "type": "INTERFACE_UPDATE",
             **interface.get_client_update()
         })
-        self.current_interface = interface
+
+    async def components_update(self, components):
+        interface = self.current_interface
+        transformed_components = interface.transform_components_update(components)
+        await self.send({
+            "type": "COMPONENTS_UPDATES",
+            "components": transformed_components
+        })
 
     async def send(self, message):
         """

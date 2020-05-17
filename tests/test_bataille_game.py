@@ -79,7 +79,7 @@ async def bataille_player(client, round_id, player_id, is_master=False):
                             if component['type'] in ['Create', 'Update']:
                                 assert 'id' in component
                                 assert 'component' in component
-                                assert 'type' in component['component']
+                                # assert 'type' in component['component']
                                 if component['id'] == 'played_cards':
                                     played_cards = component['component']['cards']
                                 elif component['id'] == 'hand':

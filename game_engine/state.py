@@ -51,7 +51,6 @@ class FiniteStateMachine:
             self._final_node = node.name
 
     async def step(self):
-        self.env.step_state()
         current_node = self.current_node_history[-1]
         node = self.nodes[current_node]
 
@@ -61,19 +60,10 @@ class FiniteStateMachine:
         except Exception as e:
             logging.exception(e)
             logging.info("Reverting to previous state.")
-
-            # Retry
-            # TODO: manage error
-            self.revert()
         else:
             self.current_node_history.append(new_node)
 
         return self.current_node_history[-1]
-
-    def revert(self):
-        self.env.revert_state()
-        for node in self.nodes.values():
-            node.revert()
 
 
 class Node:
@@ -89,32 +79,16 @@ class Node:
         self.env = None
 
         self._original_state = state or dict()
-        self.state_history = [self._original_state.copy()]
+        self.state = self._original_state.copy()
 
         self.edges = dict()
-
-    @property
-    def state(self):
-        return self.state_history[-1]
-
-    def step_state(self):
-        copied_state = deepcopy(self.state)
-        self.state_history.append(copied_state)
 
     async def setup(self):
         assert self.env is not None, "Environment is not set."
         logging.info(f"Game {self.env.round_id} node {self.name} setting up.")
 
-        self.step_state()
-
         if self.setup_fn is not None:
             await self.setup_fn(self)
-
-    def revert(self):
-        logging.info(f"Game {self.env.round_id} node {self.name} reverting to previous state.")
-        self.state_history.pop()
-        if not len(self.state_history):
-            self.state_history = [self._original_state.copy()]
 
     def add_edge(self, next_state_name, condition=None, actions=None):
         actions = actions or []

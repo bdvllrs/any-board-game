@@ -3,7 +3,6 @@ import datetime
 import logging
 from copy import deepcopy
 
-from .components.component import ComponentRegistry
 from .state import FiniteStateMachine
 
 
@@ -22,25 +21,12 @@ class GameEnv:
 
         self.winner_players = []
 
-        self.state_history = [dict()]
+        self.state = dict()
 
         self.state_machine = FiniteStateMachine(self)
 
-    @property
-    def state(self):
-        return self.state_history[-1]
-
     def add_winner(self, player):
         self.winner_players.append(player.username)
-
-    def step_state(self):
-        copied_state = deepcopy(self.state)
-        self.state_history.append(copied_state)
-
-    def revert_state(self):
-        self.state_history.pop()
-        if not len(self.state_history):
-            self.state_history = [dict()]
 
     def add_player(self, player):
         if self.can_add_player(player):
@@ -56,7 +42,9 @@ class GameEnv:
         return len(self.players) < self.max_players
 
     def bind_interface(self, node, player):
-        return player.current_interface
+        if player.current_interface is not None:
+            return player.current_interface
+        return player.default_interface
 
     async def start(self):
         self.started = True

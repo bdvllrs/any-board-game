@@ -93,10 +93,11 @@ class BatailleGame(GameEnv):
         # This will be called when the game starts before executing the state machine.
         # We will here distribute all cards randomly to the players
         # Distribute cards to players
-        self.playing_cards.shuffle()
+        await self.playing_cards.shuffle()
         player_hands = [[] for _ in self.players.keys()]
         for k in range(len(self.playing_cards)):
-            player_hands[k % len(self.players)].append(self.playing_cards.pop()[0])
+            popped_card = await self.playing_cards.pop()
+            player_hands[k % len(self.players)].append(popped_card[0])
         self.state['hands'] = dict()
         for k, player_id in enumerate(self.players.keys()):
             hand_deck = CardDeck(player_hands[k])

@@ -1,3 +1,5 @@
+import asyncio
+
 import numpy as np
 
 from game_engine.components.component import Component
@@ -47,19 +49,6 @@ class CardDeck(Component):
     def interface_description(self):
         return {'cards': [card.id for card in self.cards]}
 
-    @property
-    def on_action(self):
-        # We don't expect the player to select a deck, but a card in the deck.
-        if not len(self.cards):
-            return {}
-
-        card_interface_description = self.cards[0].on_action
-        interface_description = dict()
-        for name, attr in card_interface_description.items():
-            if '$component' in attr:
-                interface_description[name] = attr.replace('$component', '$component.cards[$clicked]')
-        return interface_description
-
     def import_yaml(self, path):
         # TODO: import cards from yaml file
         raise NotImplementedError
@@ -73,13 +62,14 @@ class CardDeck(Component):
     def __contains__(self, item):
         return item in self.cards
 
-    def shuffle(self):
+    async def shuffle(self):
         """
         Shuffles the deck
         """
         np.random.shuffle(self.cards)
+        await self.on_update()
 
-    def pop(self, rank=0, n=1):
+    async def pop(self, rank=0, n=1):
         """
         pop cards
         Args:
@@ -100,11 +90,13 @@ class CardDeck(Component):
             return []
 
         cur_rank = rank.pop(0)
-        cards = self.pop(rank, n - 1)
+        cards = await self.pop(rank, n - 1)
         cards.append(self.cards.pop(cur_rank))
+        await self.on_update()
+        await asyncio.gather(*[card.on_delete() for card in cards])
         return cards
 
-    def add(self, cards):
+    async def add(self, cards):
         """
         Add cards to the deck
         Args:
@@ -113,7 +105,13 @@ class CardDeck(Component):
         self.check_card_type(cards)
         self.cards.extend(cards)
 
-    def remove(self, c):
+        for card in cards:
+            await asyncio.gather(*[card.subscribe(subscriber) for subscriber in self.subscribers.values()])
+        await self.on_update()
+
+    async def remove(self, c):
         for card in self.cards:
             if card == c:
+                await card.on_delete()
                 self.cards.remove(card)
+        await self.on_update()

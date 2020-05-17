@@ -38,21 +38,30 @@ class Interface:
         self.comp_id_to_name[component.id] = component_name
         return self
 
-    def get_components_update(self):
-        components = []
-        for component in self.sub_components:
-            component_description = component.interface_description
-            component_id = component.id
-            if component_id in self.comp_id_to_name:
-                component_id = self.comp_id_to_name[component_id]
+    async def subscribe_to_components(self, player):
+        for component in self.components.values():
+            await component.subscribe(player)
 
-            component_description['type'] = component.__class__.__name__
-            components.append({
-                'type': 'Create',
-                'id': component_id,
-                'component': component_description
-            })
-        return components
+    async def unsubscribe_to_components(self, player):
+        for component in self.components.values():
+            await component.unsubscribe(player)
+
+    def transform_components_update(self, components):
+        """
+        Change ids of components to match the ones in the interface.
+        Args:
+            components:
+
+        Returns: transformed components with correct ids.
+
+        """
+        transformed_components = []
+        for component in components:
+            if component['id'] in self.comp_id_to_name:
+                component['id'] = self.comp_id_to_name[component['id']]
+
+            transformed_components.append(component)
+        return transformed_components
 
     def get_component(self, component_id):
         """
