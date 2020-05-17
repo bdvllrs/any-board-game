@@ -104,6 +104,21 @@ class Player:
         else:  # Don't block everyone
             self._waiting_messages.append(message)
 
+    async def notify(self, content, level="info", duration=10):
+        """
+        Notification for the player
+        Args:
+            content: content of the message
+            level: level of information. (info, warning, error)
+            duration: duration the content should stay on (in seconds)
+        """
+        await self.send({
+            'type': 'NOTIFICATION',
+            'level': level,
+            'duration': duration,
+            'content': content
+        })
+
     async def push_response(self, response):
         """
         Receives a message from the client
