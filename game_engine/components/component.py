@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+import logging
 import uuid
 
 
@@ -54,8 +55,11 @@ class Component:
 
     async def on_change(self, components, subscribers=None):
         subscribers = subscribers or self.subscribers.values()
-        await asyncio.gather(*[player.components_update(components)
-                               for player in subscribers])
+        if len(subscribers):
+            logging.debug("New component changed.")
+            logging.debug(components)
+            await asyncio.gather(*[player.components_update(components)
+                                   for player in subscribers])
 
     async def on_update(self, subscribers=None):
         components = [{
