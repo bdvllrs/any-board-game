@@ -151,6 +151,13 @@ class Player:
 
             logging.debug(f"{self.uid} received client response.")
 
+            if 'type' in response and response['type'] == "IS_ACTION_AWAITED":
+                await self.send({
+                    'type': 'ACTION_AWAITED',
+                    **action
+                })
+                continue
+
             failed = False
             messages = []
 
