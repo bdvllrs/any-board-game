@@ -55,6 +55,9 @@ class Component:
 
     async def on_change(self, components, subscribers=None):
         subscribers = subscribers or self.subscribers.values()
+        for component in components:
+            if 'component' in component and 'type' not in component['component']:
+                component['component']['type'] = self.__class__.__name__
         if len(subscribers):
             logging.debug("New component changed.")
             logging.debug(components)
