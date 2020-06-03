@@ -92,7 +92,9 @@ class CardDeck(Component):
         cur_rank = rank.pop(0)
         cards = await self.pop(rank, n - 1)
         cards.append(self.cards.pop(cur_rank))
+        # Update this component
         await self.on_update()
+        # Cleanup removed cards
         await asyncio.gather(*[card.on_delete() for card in cards])
         return cards
 
@@ -105,8 +107,11 @@ class CardDeck(Component):
         self.check_card_type(cards)
         self.cards.extend(cards)
 
-        for card in cards:
-            await asyncio.gather(*[card.subscribe(subscriber) for subscriber in self.subscribers.values()])
+        # subscribe the subscribers of this component to the new cards
+        await asyncio.gather(*[card.subscribe(subscriber)
+                               for subscriber in self.subscribers.values()
+                               for card in cards])
+        # update this component
         await self.on_update()
 
     async def remove(self, c):
