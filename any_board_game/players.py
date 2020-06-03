@@ -27,6 +27,7 @@ class Player:
         self.current_interface = None
 
         self.awaited_action = None
+        self.components = {}
 
         self._responses = asyncio.Queue()
 
@@ -87,6 +88,14 @@ class Player:
     async def components_update(self, components):
         interface = self.current_interface
         transformed_components = interface.transform_components_update(components)
+
+        # Update current info of the components
+        for component in transformed_components:
+            if component['type'] in ['Create', 'Update']:
+                self.components[component['id']] = component['component']
+            elif component['type'] == "Delete":
+                del self.components[component['id']]
+
         await self.send({
             "type": "COMPONENTS_UPDATES",
             "components": transformed_components

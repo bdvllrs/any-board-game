@@ -91,6 +91,28 @@ async def join_round_socket(request):
                                                for p in game.players.values()])
                     elif json_msg['type'] == "AWAITED_ACTIONS":
                         await player.send(player.awaited_action)
+                    elif json_msg['type'] == "GET_COMPONENTS":
+                        if 'ids' in json_msg:
+                            component_ids = json_msg['ids']
+                        else:
+                            component_ids = player.components.keys()
+                        components = []
+                        for component_id in component_ids:
+                            if component_id in player.components.keys():
+                                components.append({
+                                    "type": "Update",
+                                    "id": component_id,
+                                    "component": player.components[component_id]
+                                })
+                            else:
+                                components.append({
+                                    "type": "Delete",
+                                    "id": component_id
+                                })
+                        await player.send({
+                            "type": "COMPONENT_UPDATES",
+                            "components": components
+                        })
                     else:
                         await player.push_response(json_msg)
                 # await ws.send_str(msg.data + '/answer')
