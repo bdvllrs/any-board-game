@@ -110,7 +110,7 @@ async def join_round_socket(request):
                                     "id": component_id
                                 })
                         await player.send({
-                            "type": "COMPONENT_UPDATES",
+                            "type": "COMPONENTS_UPDATES",
                             "components": components
                         })
                     else:
