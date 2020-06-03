@@ -89,6 +89,8 @@ async def join_round_socket(request):
                                                        "message": json_msg['message'],
                                                        "author": player.username})
                                                for p in game.players.values()])
+                    elif json_msg['type'] == "AWAITED_ACTIONS":
+                        await player.send(player.awaited_action)
                     else:
                         await player.push_response(json_msg)
                 # await ws.send_str(msg.data + '/answer')

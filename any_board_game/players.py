@@ -26,6 +26,8 @@ class Player:
         self._socket = None
         self.current_interface = None
 
+        self.awaited_action = None
+
         self._responses = asyncio.Queue()
 
         self._waiting_messages = []
@@ -141,22 +143,17 @@ class Player:
         """
         logging.debug(f"{self.uid} awaiting client response.")
 
-        await self.send({
+        self.awaited_action = {
             'type': 'ACTION_AWAITED',
             **action
-        })
+        }
+
+        await self.send(self.awaited_action)
 
         while True:
             response = await self._responses.get()
 
             logging.debug(f"{self.uid} received client response.")
-
-            if 'type' in response and response['type'] == "IS_ACTION_AWAITED":
-                await self.send({
-                    'type': 'ACTION_AWAITED',
-                    **action
-                })
-                continue
 
             failed = False
             messages = []
@@ -183,4 +180,6 @@ class Player:
                 logging.debug(f"{self.uid} received bad client response.")
                 await self.socket.send_json({"type": "ERROR",
                                              "messages": messages})
+
+        self.awaited_action = None
         return transformed_response
