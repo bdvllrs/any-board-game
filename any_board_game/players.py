@@ -93,7 +93,7 @@ class Player:
         for component in transformed_components:
             if component['type'] in ['Create', 'Update']:
                 self.components[component['id']] = component['component']
-            elif component['type'] == "Delete":
+            elif component['type'] == "Delete" and component['id'] in self.components.keys():
                 del self.components[component['id']]
 
         await self.send({
