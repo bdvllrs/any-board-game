@@ -4,7 +4,7 @@ import logging
 import aiohttp
 from aiohttp import web
 
-from game_engine.server.utils import add_player_to_round
+from any_board_game.server.utils import add_player_to_round
 
 
 async def join_game_route(request):

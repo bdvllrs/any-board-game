@@ -2,7 +2,7 @@ import asyncio
 
 import aiohttp
 
-from game_engine.server import make_app, initialize_start_game
+from any_board_game.server import make_app, initialize_start_game
 
 
 async def test_create_and_join_round(aiohttp_client, loop):

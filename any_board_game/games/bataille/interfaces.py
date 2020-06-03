@@ -1,4 +1,4 @@
-from game_engine.client.interface import Interface
+from any_board_game.client.interface import Interface
 
 
 class PlayerInterface(Interface):  # This extends the default interface

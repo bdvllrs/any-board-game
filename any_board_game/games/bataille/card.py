@@ -1,4 +1,4 @@
-from game_engine.components.cards import Card as Card_
+from any_board_game.components.cards import Card as Card_
 
 
 class Card(Card_):

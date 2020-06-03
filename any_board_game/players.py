@@ -2,7 +2,7 @@ import asyncio
 import logging
 from copy import deepcopy
 
-from game_engine.validators import ValidationException
+from any_board_game.validators import ValidationException
 
 
 def action_to_components(action_request, action_response, interface):

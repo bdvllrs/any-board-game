@@ -2,7 +2,7 @@ import asyncio
 
 import numpy as np
 
-from game_engine.components.component import Component
+from any_board_game.components.component import Component
 
 
 class Card(Component):

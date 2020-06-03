@@ -1,5 +1,5 @@
-from game_engine.state import StateManager, StateNode, Triggers
-from game_engine.games.citadel.conditions import pick_card_condition, start_used_power_condition, start_picked_coin_condition, \
+from any_board_game.state import StateManager, StateNode, Triggers
+from any_board_game.games.citadel.conditions import pick_card_condition, start_used_power_condition, start_picked_coin_condition, \
     used_power_picked_coin_condition, used_power_drew_card_condition, picked_coin_used_power_condition, \
     picked_coin_built_condition, drew_card_used_power_condition, drew_card_built_condition, \
     playing_end_playing_start_condition, building_selection_start_condition

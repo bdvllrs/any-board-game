@@ -11,11 +11,11 @@ def package_files(directory):
     return paths
 
 
-setup(name='game-engine',
+setup(name='any-board-game',
       version='0.1.0',
       install_requires=['PyYAML', 'aiohttp', 'numpy'],
       package_data={
-          "": package_files("game_engine/games")
+          "": package_files("any_board_game/games")
       },
       extras_require={
           'dev': [

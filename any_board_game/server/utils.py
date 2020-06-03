@@ -6,8 +6,8 @@ import uuid
 import yaml
 from aiohttp import web
 
-from game_engine.players import Player
-from game_engine.utils import games_folder
+from any_board_game.players import Player
+from any_board_game.utils import games_folder
 
 
 def generate_username():

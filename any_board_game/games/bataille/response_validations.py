@@ -2,8 +2,8 @@
 This file defines the nodes expected contexts.
 If the context given to the node does not fit, the State Machine will not execute the transition.
 """
-from game_engine.components.cards import Card
-from game_engine.validators import ResponseValidation, ValidationException
+from any_board_game.components.cards import Card
+from any_board_game.validators import ResponseValidation, ValidationException
 
 
 class PlayResponseValidator(ResponseValidation):
