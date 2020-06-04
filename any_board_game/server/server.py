@@ -1,10 +1,11 @@
-import uuid
 import logging
+import uuid
 
 from aiohttp import web
 
 from any_board_game.server.join_round import join_game_route
-from any_board_game.server.utils import generate_username, add_player_to_round, get_game_from_game_id, get_available_games
+from any_board_game.server.utils import generate_username, add_player_to_round, get_game_from_game_id, \
+    get_available_games
 
 
 async def start_game(request):
@@ -102,7 +103,7 @@ def make_app():
     return app
 
 
-if __name__ == '__main__':
+def serve():
     import argparse
 
     parser = argparse.ArgumentParser(description="AnyBoardGame")
@@ -112,3 +113,7 @@ if __name__ == '__main__':
 
     app = make_app()
     web.run_app(app, port=args.port)
+
+
+if __name__ == '__main__':
+    serve()

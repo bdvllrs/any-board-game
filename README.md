@@ -18,13 +18,13 @@ This is the server side of the project!
 ### Install
 
 ```
-pip install -m https://github.com/bdvllrs/any-board-game.git
+git clone https://github.com/bdvllrs/any-board-game.git && pip install -e any-board-game
 ```
 This will create a folder `any-board-game`. 
 You can then start the server using:
 
 ```
-python any-board-game/any_board_game/server/server.py
+abg-server [--port SERVER_PORT]
 ```
 
 ## :green_book: Doc

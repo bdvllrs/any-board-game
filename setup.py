@@ -22,4 +22,8 @@ setup(name='any-board-game',
               'pytest',
               'pytest-aiohttp'
           ]},
-      packages=find_packages())
+      packages=find_packages(),
+      entry_points="""
+      [console_scripts]
+      abg-server=any_board_game.server.server.serve
+      """)
