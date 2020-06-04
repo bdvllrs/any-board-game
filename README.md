@@ -28,4 +28,4 @@ abg-server [--port SERVER_PORT]
 ```
 
 ## :green_book: Doc
-To do
+- [API](https://github.com/bdvllrs/any-board-game/blob/master/docs/api.md)
