@@ -14,7 +14,7 @@ This is the server side of the project!
 ## :computer: Client
 - In rust: https://github.com/totorigolo/cards-client-rs
 
-## Quick Start
+## :rocket: Quick Start
 ### Install
 
 From our git repository:
