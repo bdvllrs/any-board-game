@@ -15,7 +15,7 @@ setup(name='any-board-game',
       version='0.1.0',
       install_requires=['PyYAML', 'aiohttp', 'numpy'],
       package_data={
-          "": package_files("any_board_game/sample_games")
+          "": package_files("sample_games")
       },
       extras_require={
           'dev': [
