@@ -17,7 +17,7 @@ tags:
   - name: game
     description: Game management
   - name: round
-    description: Rounds of games
+    description: Rounds of sample_games
 paths:
   /game/{gameId}:
     get:

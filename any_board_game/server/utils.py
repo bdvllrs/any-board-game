@@ -7,7 +7,7 @@ import yaml
 from aiohttp import web
 
 from any_board_game.players import Player
-from any_board_game.utils import games_folder
+from any_board_game.utils import sample_game_folder
 
 
 def generate_username():
@@ -60,10 +60,10 @@ async def initialize_start_game(app, aiohttp_client, game_name, usernames, creat
 def add_player_to_round(request, round_id, username):
     if username is None:
         username = generate_username()
-    if round_id not in request.app['games'].keys():
+    if round_id not in request.app['sample_games'].keys():
         return web.json_response({}, status=404)
 
-    game = request.app['games'][round_id]
+    game = request.app['sample_games'][round_id]
 
     if game.started:
         logging.error("Player cannot enter an already started game.")
@@ -103,42 +103,44 @@ def make_game_config(config) -> dict:
     return default_config
 
 
-def get_available_games():
+def get_available_games(game_folder):
     """
-    Loads and returns games in the games folder.
+    Loads and returns sample_games in the sample_games folder.
     """
     games = []
-    logging.debug(f"Loading games from {str(games_folder)}")
-    for folder in games_folder.iterdir():
-        if folder.is_dir():
-            for file in folder.iterdir():
-                if file.name == 'config.yaml':
-                    with open(file, 'r') as config_file:
-                        yaml_config = yaml.safe_load(config_file)
-                    if ('game_env' in yaml_config and 'location' in yaml_config['game_env']
-                            and 'name' in yaml_config['game_env']):
-                        yaml_config['__game_location'] = file.resolve().parent
-                        game_env_location = str(file.resolve().parent / yaml_config['game_env']['location'])
-                        spec = importlib.util.spec_from_file_location("game_env", game_env_location)
-                        game_env = importlib.util.module_from_spec(spec)
-                        spec.loader.exec_module(game_env)
-                        yaml_config['game_env']['__class'] = getattr(game_env, yaml_config['game_env']['name'])
+    logging.debug(f"Loading sample_games from {str(game_folder)}")
+    for gm in [game_folder, sample_game_folder]:
+        for folder in gm.iterdir():
+            if folder.is_dir():
+                for file in folder.iterdir():
+                    if file.name == 'config.yaml':
+                        with open(file, 'r') as config_file:
+                            yaml_config = yaml.safe_load(config_file)
+                        if ('game_env' in yaml_config and 'location' in yaml_config['game_env']
+                                and 'name' in yaml_config['game_env']):
+                            yaml_config['__game_location'] = file.resolve().parent
+                            game_env_location = str(file.resolve().parent / yaml_config['game_env']['location'])
+                            spec = importlib.util.spec_from_file_location("game_env", game_env_location)
+                            game_env = importlib.util.module_from_spec(spec)
+                            spec.loader.exec_module(game_env)
+                            yaml_config['game_env']['__class'] = getattr(game_env, yaml_config['game_env']['name'])
 
-                        logging.debug(f"Found game {yaml_config['game_env']['__class'].game_id}")
+                            logging.debug(f"Found game {yaml_config['game_env']['__class'].game_id}")
 
-                        games.append(make_game_config(yaml_config))
+                            games.append(make_game_config(yaml_config))
     return games
 
 
-def get_game_from_game_id(game_id):
+def get_game_from_game_id(game_folder, game_id):
     """
     Gets the game infos of a specific requested game_id
     Args:
+        game_folder
         game_id:
 
     Returns: Game config or None.
     """
-    games = get_available_games()
+    games = get_available_games(game_folder)
     for game in games:
         if game['game_env']['__class'].game_id == game_id:
             return game

@@ -3,10 +3,11 @@ import asyncio
 import aiohttp
 
 from any_board_game.server import make_app, initialize_start_game
+from any_board_game.utils import sample_game_folder
 
 
 async def test_create_and_join_round(aiohttp_client, loop):
-    app = make_app()
+    app = make_app(sample_game_folder)
     client = await aiohttp_client(app)
     game_name = "bataille"
     usernames = ["test1", "test2", "test3"]
@@ -14,7 +15,7 @@ async def test_create_and_join_round(aiohttp_client, loop):
                                  json=dict(username=usernames[0]))
     response_data = await response.json()
     assert response_data['createdBy'] == usernames[0]
-    assert response_data['id'] in client.app['games']
+    assert response_data['id'] in client.app['sample_games']
 
     # player 2 connects
     response_player2 = await client.get(f"/round/{response_data['id']}/join",
@@ -76,7 +77,7 @@ async def send_receive_chat(client, round_id, player_id, username):
 
 
 async def test_chat_feature(aiohttp_client, loop):
-    app = make_app()
+    app = make_app(sample_game_folder)
     usernames = ['player 1', 'player 2']
     round_id, clients, responses = await initialize_start_game(app, aiohttp_client, 'bataille', usernames)
 
@@ -88,7 +89,7 @@ async def test_chat_feature(aiohttp_client, loop):
 
 
 async def test_list_rounds(aiohttp_client, loop):
-    app = make_app()
+    app = make_app(sample_game_folder)
     usernames = ["player1", "player2"]
     game_id = "bataille"
     await initialize_start_game(app, aiohttp_client, game_id, usernames, {'public': True})
@@ -102,7 +103,7 @@ async def test_list_rounds(aiohttp_client, loop):
 
 
 async def test_list_games(aiohttp_client, loop):
-    app = make_app()
+    app = make_app(sample_game_folder)
     client = await aiohttp_client(app)
     response = await client.get("/game/list")
     response_data = await response.json()
@@ -115,7 +116,7 @@ async def test_list_games(aiohttp_client, loop):
 
 
 async def test_game_info(aiohttp_client, loop):
-    app = make_app()
+    app = make_app(sample_game_folder)
     client = await aiohttp_client(app)
     response = await client.get("/game/list")
     available_games = await response.json()

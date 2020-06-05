@@ -1,4 +1,4 @@
-from any_board_game.games.bataille.response_validations import PlayResponseValidator
+from sample_games.bataille.response_validations import PlayResponseValidator
 
 
 async def new_turn_setup(node):

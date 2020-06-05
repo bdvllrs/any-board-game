@@ -17,15 +17,28 @@ This is the server side of the project!
 ## Quick Start
 ### Install
 
+From our git repository:
 ```
-git clone https://github.com/bdvllrs/any-board-game.git && pip install -e any-board-game
+pip install --user git+https://github.com/bdvllrs/any-board-game.git
 ```
-This will create a folder `any-board-game`. 
-You can then start the server using:
+
+Then start the server with:
+```
+abg-server [--port, -p SERVER_PORT]
+```
+
+### Add some games
+If you are tired of the sample games provided with this repository, you can
+add games created by others or yourself to your game collection.
+You need to create a game folder when you will put your abg games.
+You can then give a game folder to the `abg-server` command.
 
 ```
-abg-server [--port SERVER_PORT]
+mkdir /path/to/abg_collection
+
+abg-server --game_folder /path/to/abg_collection
 ```
+
 
 ## :green_book: Doc
 - [API](https://github.com/bdvllrs/any-board-game/blob/master/docs/api.md)

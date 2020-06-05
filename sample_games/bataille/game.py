@@ -1,8 +1,8 @@
 from any_board_game.components.cards import CardDeck
-from any_board_game.games.bataille.card import Card
+from sample_games.bataille.card import Card
 from any_board_game.game import GameEnv
-from any_board_game.games.bataille.interfaces import PlayerInterface
-from any_board_game.games.bataille.utils import new_turn_setup, play_node_setup, new_turn_end_condition, \
+from sample_games.bataille.interfaces import PlayerInterface
+from sample_games.bataille.utils import new_turn_setup, play_node_setup, new_turn_end_condition, \
     play_new_turn_condition, set_player_in_node_state_action, play_new_turn_action
 from any_board_game.state import Node
 

@@ -3,14 +3,19 @@ import asyncio
 import aiohttp
 import numpy as np
 
-from any_board_game.games.bataille.game import BatailleGame
 from any_board_game.players import Player
 from any_board_game.server import make_app, initialize_start_game
+from any_board_game.server.utils import get_game_from_game_id
+from any_board_game.utils import sample_game_folder
 
 
 async def test_bataille_game_setup():
+    bataille_game = get_game_from_game_id(sample_game_folder, "bataille")
+    assert 'game_env' in bataille_game
+    assert '__class' in bataille_game['game_env']
+
     num_players = 2
-    game_instance = BatailleGame("0", "player0", False)
+    game_instance = bataille_game['game_env']['__class']("0", "player0", False)
     players = [Player(f"player{idx}", str(idx)) for idx in range(num_players)]
     for player in players:
         game_instance.add_player(player)
@@ -133,7 +138,7 @@ async def bataille_player(client, round_id, player_id, is_master=False):
 
 async def test_bataille_game(aiohttp_client, loop):
     np.random.seed(0)
-    app = make_app()
+    app = make_app(sample_game_folder)
 
     game_name = "bataille"
     usernames = ["test1", "test2", "test3"]
