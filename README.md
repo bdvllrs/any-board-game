@@ -41,4 +41,7 @@ abg-server --game_folder /path/to/abg_collection
 
 
 ## :green_book: Doc
-- [API](https://github.com/bdvllrs/any-board-game/blob/master/docs/api.md)
+- [Http API](https://github.com/bdvllrs/any-board-game/blob/master/docs/api.md)
+- [Websocket API](https://github.com/bdvllrs/any-board-game/blob/master/docs/websocket-api.md)
+- [Game components](https://github.com/bdvllrs/any-board-game/blob/master/docs/components.md)
+- [Client actions](https://github.com/bdvllrs/any-board-game/blob/master/docs/actions.md)

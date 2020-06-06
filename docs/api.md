@@ -1,4 +1,4 @@
-# :page_with_curl: API
+# :page_with_curl: Http API
 
 ## Some object definitions
 
@@ -22,7 +22,8 @@
 }
 ```
 
-### `RoundInformation`
+### `
+RoundInformation`
 ```
 {
   "playerId": playerId,
@@ -101,3 +102,10 @@ List the *public* started round.
 
 ### Returns
 `list[SimpleRoundInformation]`
+
+
+## What to read next
+The Http API is half of the communication with the server.
+
+The rest is handled by the [websocket API](https://github.com/bdvllrs/any-board-game/blob/master/docs/websocket-api.md).
+(Start the games, and other game communications.)

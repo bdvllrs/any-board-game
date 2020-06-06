@@ -67,17 +67,21 @@ async def join_round_socket(request):
     # Listen for messages
     async for msg in ws:
         if msg.type == aiohttp.WSMsgType.TEXT:
-            if msg.data == 'CLOSE':
-                player.disconnect()
-                await asyncio.gather(*[p.socket.send_json({"type": "PLAYER_DISCONNECTED", "username": player.username})
-                                       for p in game.players.values() if p.connected])
-                await ws.close()
-            else:
+            try:
                 json_msg = msg.json()
+            except Exception:
+                logging.info(f"Received message from {player_id} is not json.")
+                logging.debug(msg.data)
+            else:
                 logging.info(f"WS Received by {player_id}")
                 logging.debug(json_msg)
                 if type(json_msg) == dict and "type" in json_msg:
-                    if json_msg['type'] == 'PING':
+                    if json_msg['type'] == 'CLOSE':
+                        player.disconnect()
+                        await asyncio.gather(*[p.socket.send_json({"type": "PLAYER_DISCONNECTED", "username": player.username})
+                                               for p in game.players.values() if p.connected])
+                        await ws.close()
+                    elif json_msg['type'] == 'PING':
                         await ws.send_json({"type": "PONG"})
                     # Start the game
                     elif json_msg['type'] == "START_GAME" and game.created_by == player.username and not game.started:
@@ -89,33 +93,9 @@ async def join_round_socket(request):
                                                        "message": json_msg['message'],
                                                        "author": player.username})
                                                for p in game.players.values()])
-                    elif json_msg['type'] == "AWAITED_ACTIONS":
-                        await player.send(player.awaited_action)
-                    elif json_msg['type'] == "GET_COMPONENTS":
-                        if 'ids' in json_msg:
-                            component_ids = json_msg['ids']
-                        else:
-                            component_ids = player.components.keys()
-                        components = []
-                        for component_id in component_ids:
-                            if component_id in player.components.keys():
-                                components.append({
-                                    "type": "Update",
-                                    "id": component_id,
-                                    "component": player.components[component_id]
-                                })
-                            else:
-                                components.append({
-                                    "type": "Delete",
-                                    "id": component_id
-                                })
-                        await player.send({
-                            "type": "COMPONENTS_UPDATES",
-                            "components": components
-                        })
                     else:
-                        await player.push_response(json_msg)
-                # await ws.send_str(msg.data + '/answer')
+                        await player.push_message(json_msg)
+            # await ws.send_str(msg.data + '/answer')
         elif msg.type == aiohttp.WSMsgType.ERROR:
             logging.exception(f'ws connection closed with exception {ws.exception()}')
             player.disconnect()

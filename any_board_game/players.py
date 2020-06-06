@@ -130,7 +130,7 @@ class Player:
             'content': content
         })
 
-    async def push_response(self, response):
+    async def push_message(self, response):
         """
         Receives a message from the client
         Args:
@@ -139,7 +139,41 @@ class Player:
         Returns:
 
         """
-        await self._responses.put(response)
+
+        if 'type' in response:
+            if response['type'] == "ACTION_RESPONSE":
+                await self._responses.put(response)
+            elif response['type'] == "AWAITED_ACTIONS":
+                await self.send(self.awaited_action)
+            elif response['type'] == "GET_COMPONENTS":
+                if 'ids' in response:
+                    component_ids = response['ids']
+                else:
+                    component_ids = self.components.keys()
+                components = []
+                for component_id in component_ids:
+                    if component_id in self.components.keys():
+                        components.append({
+                            "type": "Update",
+                            "id": component_id,
+                            "component": self.components[component_id]
+                        })
+                    else:
+                        components.append({
+                            "type": "Delete",
+                            "id": component_id
+                        })
+                await self.send({
+                    "type": "COMPONENTS_UPDATES",
+                    "components": components
+                })
+            else:
+                logging.warning("A message has been pushed to the client but is of unknown type. The message is "
+                                "discarded")
+                logging.warning(response)
+        else:
+            logging.warning("A message has been pushed to the client but does not have a type. The message is discarded")
+            logging.warning(response)
 
     async def client_action(self, action, validators=None):
         """
