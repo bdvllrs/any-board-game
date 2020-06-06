@@ -60,10 +60,10 @@ async def initialize_start_game(app, aiohttp_client, game_name, usernames, creat
 def add_player_to_round(request, round_id, username):
     if username is None:
         username = generate_username()
-    if round_id not in request.app['sample_games'].keys():
-        return web.json_response({}, status=404)
+    if round_id not in request.app['games'].keys():
+        return web.json_response({"message": f"{round_id} is not a valid roundId."}, status=404)
 
-    game = request.app['sample_games'][round_id]
+    game = request.app['games'][round_id]
 
     if game.started:
         logging.error("Player cannot enter an already started game.")
@@ -77,7 +77,7 @@ def add_player_to_round(request, round_id, username):
     if not is_added:
         logging.error("Player cannot enter this game."
                       "Because there are already to many player or does't fit the GameEnv.can_add_player condition.")
-        return web.json_response({"message": f"You cannot enter the game."}, status=403)
+        return web.json_response({"message": "You cannot enter the game."}, status=403)
     return web.json_response({"playerId": player_id,
                               "id": round_id,
                               "gameId": game.game_id,

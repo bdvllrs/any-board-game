@@ -38,6 +38,19 @@
 }
 ```
 
+### `SimpleRoundInformation`
+```
+{
+  "id": roundId,
+  "gameId": gameId,
+  "started": bool,
+  "createdOn": timestamp,
+  "createdBy": str,
+  "public": bool,
+  "players": list[str]
+}
+```
+
 ## `GET /game/list`
 List the available games to play.
 
@@ -68,7 +81,23 @@ Create a new round of a given game.
 - 500 "An unexpected error has occurred. ...", an error occured loading and initializing the game. Check the `__init__` of the GameInstance.
 - 403 "You cannot enter the game.", you do not fit the pre-requisite to enter the game (the `can_add_player` method of the GameInstance).
 
-## `GET /round/{round_id}/join`
-TODO
+## `GET /round/<roundId>/join`
+Join a round 
+
+### Arguments
+- username (str): player username
+
+### Returns
+`RoundInformation`
+
+### Errors
+- 404 "{roundId} is not a valid roundId", provided `roundId` is incorrect.
+- 403 "Game has already started.", given `roundId` correspond to an already started game.
+- 403 "Username {username} is already taken.", provided username is already taken by another player in the game.
+- 403 "You cannot enter the game.", either too many players already in the round, or do not fit the pre-requisite to enter the game (the `can_add_player` method of the GameInstance).
+
 ## `GET /round/list`
-TODO
+List the *public* started round.
+
+### Returns
+`list[SimpleRoundInformation]`

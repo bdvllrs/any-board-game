@@ -15,7 +15,7 @@ async def test_create_and_join_round(aiohttp_client, loop):
                                  json=dict(username=usernames[0]))
     response_data = await response.json()
     assert response_data['createdBy'] == usernames[0]
-    assert response_data['id'] in client.app['sample_games']
+    assert response_data['id'] in client.app['games']
 
     # player 2 connects
     response_player2 = await client.get(f"/round/{response_data['id']}/join",

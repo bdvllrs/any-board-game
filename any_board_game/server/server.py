@@ -29,7 +29,7 @@ async def start_game(request):
     if game_conf is not None:
         game_class = game_conf['game_env']['__class']
         try:
-            request.app['sample_games'][round_id] = game_class(round_id, creator_username, is_game_public)
+            request.app['games'][round_id] = game_class(round_id, creator_username, is_game_public)
         except Exception as e:
             # traceback.print_tb(e.__traceback__)
             logging.exception(e)
@@ -46,11 +46,11 @@ async def start_game(request):
 async def list_rounds(request):
     logging.info(f"Request: {request.url}")
     games = []
-    for round_id, game in request.app['sample_games'].items():
+    for round_id, game in request.app['games'].items():
         if game.is_public:
             games.append({
                 'gameId': game.game_id,
-                'roundId': round_id,
+                'id': round_id,
                 'started': game.started,
                 'players': [player.username for player in game.players.values()],
                 'createdOn': str(game.created_on),
@@ -101,7 +101,7 @@ def make_app(game_folder=None):
             sys.path.append(str(game_folder))
 
     app = web.Application()
-    app['sample_games'] = dict()
+    app['games'] = dict()
     app['game_folder'] = game_folder
 
     app.add_routes([
