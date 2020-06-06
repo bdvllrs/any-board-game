@@ -124,7 +124,7 @@ A notification from the game.
 #### Message
 ```
 {
-    "type": 'NOTIFICATION',
+    "type": "NOTIFICATION",
     "level": ("info" | "warning" | "error"),
     "duration": int (sec),
     "content": str
@@ -221,7 +221,7 @@ Send a `CHAT` message to all connected players.
 Response after receiving a `ACTION_AWAITED` message. Sends 
 action choices of the player.
 
-### Message example
+#### Message example
 ```
 {
   "type": "ACTION_RESPONSE",  
