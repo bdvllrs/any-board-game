@@ -12,7 +12,7 @@ Try our project on [our website](https://cards.busy.ovh).
 This is the server side of the project!
 
 ## :computer: Client
-- In rust: https://github.com/totorigolo/cards-client-rs
+- In closure: https://github.com/totorigolo/any-board-game-client-clj
 
 ## :rocket: Quick Start
 ### Install
