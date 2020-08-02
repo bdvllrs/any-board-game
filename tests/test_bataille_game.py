@@ -82,6 +82,7 @@ async def bataille_player(client, round_id, player_id, is_master=False):
                         assert 'components' in msg_json
                         for component in msg_json['components']:
                             if component['type'] in ['Create', 'Update']:
+                                print("Updated", component)
                                 assert 'id' in component
                                 assert 'component' in component
                                 # assert 'type' in component['component']
@@ -92,8 +93,9 @@ async def bataille_player(client, round_id, player_id, is_master=False):
                                 elif component['component']['type'] == 'Card':
                                     cards[component['id']] = component['component']
                             elif component['type'] == "Delete":
-                                # TODO
-                                pass
+                                print("Deleted", component)
+                                if component['id'] in cards:
+                                    del cards[component['id']]
                     elif msg_json['type'] == 'INTERFACE_UPDATE':
                         print(f"=CLIENT {player_id}=  INTERFACE_UPDATE")
                         print(msg_json)

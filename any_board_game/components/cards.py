@@ -114,6 +114,17 @@ class CardDeck(Component):
         # update this component
         await self.on_update()
 
+    async def transfer_to(self, cards, new_card_deck):
+        """
+        Transfers a card from this deck to another
+        Args:
+            cards:
+            new_card_deck:
+        Returns:
+        """
+        await asyncio.gather(*[self.remove(card) for card in cards])
+        await new_card_deck.add(cards)
+
     async def remove(self, c):
         for card in self.cards:
             if card == c:

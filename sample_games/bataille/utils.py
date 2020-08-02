@@ -36,10 +36,8 @@ async def play_node_setup(node):
     card = response['hand']  # This is a Card object
 
     node.env.state['played_card_to_player'][card.name] = player_uid
-    await node.env.state['played_cards'].add([card])
     # And we remove the card from the hand of the player.
-    await node.env.state['hands'][player.uid].remove(card)
-    # Now we update the played cards in the
+    await node.env.state['hands'][player.uid].transfer_to([card], node.env.state['played_cards'])
 
 
 async def new_turn_end_condition(node):
